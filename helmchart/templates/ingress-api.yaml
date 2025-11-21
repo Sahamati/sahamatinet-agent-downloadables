@@ -1,0 +1,31 @@
+{{- if and .Values.global .Values.global.enable_app_gateway }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ .Values.ingress.api_name }}"
+  namespace: "{{ .Values.ingress.namespace }}"
+  annotations:
+    kubernetes.io/ingress.class: "{{ .Values.global.app_gateway_ingress_class }}"
+    appgw.ingress.kubernetes.io/ssl-redirect: "{{ .Values.ingress.ssl_redirect }}"
+    cert-manager.io/cluster-issuer: "{{ .Values.ingress.cluster_issuer }}"
+    appgw.ingress.kubernetes.io/health-probe-path: "{{ .Values.ingress.health_path }}"
+    appgw.ingress.kubernetes.io/backend-path-prefix: "/api/v1/"
+spec:
+  tls:
+  - hosts:
+    - "{{ .Values.ingress.api_host }}"
+    secretName: "{{ .Values.ingress.api_secret_name }}"
+  rules:
+  - host: "{{ .Values.ingress.api_host }}"
+    http:
+      paths:
+      - path: "/sna/v1/*"
+        pathType: Prefix
+        backend:
+          service:
+            name: "{{ .Chart.Name }}"
+            port:
+              name: http
+{{- end }}
+

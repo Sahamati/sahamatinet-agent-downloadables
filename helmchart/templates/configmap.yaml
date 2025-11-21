@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Chart.Name }}
+    system.querying: "true"
+data:
+  PORT: "{{ .Values.data.port }}"
+  NODE_ENV: "{{ .Values.data.node_env }}"
+  SERVICE_NAME: "{{ .Values.data.service_name }}"

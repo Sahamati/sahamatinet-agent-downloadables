@@ -1,0 +1,83 @@
+# Default values for sahamatinet-agent
+# This chart installs SahamatiNet Agent service with minimal dependencies
+
+replicaCount: 1
+
+namespace: sahamatinet-agent
+
+# Image configuration
+image:
+  repository: srivatsak2002/sahamatinet-agent
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+# Image pull secrets (optional - only needed for private registries)
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 4044
+  targetPort: 4044
+
+# Resource limits
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 256Mi
+
+# Readiness probe
+readinessProbe:
+  httpGet:
+    path: /api/v1/ping
+    port: 4044
+  initialDelaySeconds: 10
+  periodSeconds: 60
+  failureThreshold: 3
+  timeoutSeconds: 5
+  successThreshold: 1
+
+# Liveness probe (optional)
+livenessProbe: {}
+
+terminationGracePeriodSeconds: 60
+preStopSleepSeconds: 30
+
+# Environment variables
+data:
+  port: 4044
+  node_env: "production"
+  service_name: "SNA (SahamatiNet Agent)"
+
+# Ingress configuration (optional - disabled by default)
+# Only enable if you have an ingress controller and need external access
+ingress:
+  enabled: false
+  namespace: sahamatinet-agent
+  ssl_redirect: "true"
+  cluster_issuer: letsencrypt-prod
+  health_path: "/api/v1/ping"
+  api_name: sahamatinet-agent-api-ingress
+  api_host: ""
+  api_secret_name: ""
+
+# Global settings for ingress (only needed if ingress is enabled)
+global:
+  enable_nginx_kong: false
+  enable_app_gateway: false
+  kong_ingress_class: kong
+  app_gateway_ingress_class: azure/application-gateway
+
+# Horizontal Pod Autoscaler (optional - enabled by default)
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  cpuTarget: 80
+  scaleDownWindow: 300
