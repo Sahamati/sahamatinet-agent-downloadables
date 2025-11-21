@@ -17,8 +17,8 @@ Guide to deploy SahamatiNet Agent using Helm chart in Kubernetes.
 ### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
-cd sahamati-net-agent
+git clone https://github.com/Sahamati/sahamatinet-agent-downloadables.git
+cd sahamatinet-agent-downloadables
 ```
 
 ### 2. Create Namespace
@@ -338,6 +338,7 @@ kubectl delete namespace sahamatinet-agent
 
 ## Additional Information
 
+- **Repository**: `https://github.com/Sahamati/sahamatinet-agent-downloadables.git`
 - **Helm Chart Location**: `helmchart/`
 - **Docker Image**: `srivatsak2002/sahamatinet-agent:1.0.0`
 - **Service Port**: `4044`
@@ -345,4 +346,4 @@ kubectl delete namespace sahamatinet-agent
 
 ## Support
 
-For issues or questions, please refer to the repository issues or contact the Sahamati team.
+For issues or questions, please contact the Sahamati team.
