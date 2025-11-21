@@ -10,7 +10,7 @@ Guide to deploy SahamatiNet Agent using Helm chart in Kubernetes.
 
 ## Docker Image
 
-**Image**: `srivatsak2002/sahamatinet-agent:1.0.0`
+**Image**: `sahamatidevsecops/sahamatinet-agent:1.0.0`
 
 ## Quick Start
 
@@ -44,6 +44,7 @@ helm install sahamatinet-agent ./helmchart --namespace sahamatinet-agent
 
 ```bash
 kubectl get pods -n sahamatinet-agent
+kubectl get statefulset -n sahamatinet-agent
 kubectl get svc -n sahamatinet-agent
 ```
 
@@ -55,7 +56,7 @@ The Helm chart uses the following configuration variables (defined in `values.ya
 
 ```yaml
 image:
-  repository: srivatsak2002/sahamatinet-agent
+  repository: sahamatidevsecops/sahamatinet-agent
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 ```
@@ -195,9 +196,9 @@ Once deployed, you can test the three APIs:
 kubectl port-forward -n sahamatinet-agent svc/sahamatinet-agent 4044:4044
 
 # In another terminal - test the APIs
-curl http://localhost:4044/api/v1/ping
-curl http://localhost:4044/api/v1/version
-curl -X POST http://localhost:4044/api/v1/aa \
+curl http://localhost:4044/sna/v1/ping
+curl http://localhost:4044/sna/v1/version
+curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```
@@ -205,8 +206,8 @@ curl -X POST http://localhost:4044/api/v1/aa \
 ### Method 2: kubectl exec
 
 ```bash
-kubectl exec -n sahamatinet-agent -it deployment/sahamatinet-agent -- \
-  curl http://localhost:4044/api/v1/ping
+kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- \
+  curl http://localhost:4044/sna/v1/ping
 ```
 
 ### Method 3: Using Ingress (if configured)
@@ -219,7 +220,7 @@ curl -X POST https://your-domain.com/sna/v1/aa \
   -d '{"test": "data"}'
 ```
 
-**Note**: When using Kong/App Gateway ingress, the path prefix `/sna/v1/` is rewritten to `/api/v1/` internally.
+**Note**: When using Kong/App Gateway ingress, the path prefix `/sna/v1/` is used for external access and routes to `/sna/v1/` internally.
 
 ## API Endpoints
 
@@ -227,7 +228,7 @@ The SahamatiNet Agent service provides three APIs:
 
 ### 1. Health Check API
 
-**Endpoint**: `GET /api/v1/ping`
+**Endpoint**: `GET /sna/v1/ping`
 
 **Response**:
 ```json
@@ -238,12 +239,12 @@ The SahamatiNet Agent service provides three APIs:
 
 **Example**:
 ```bash
-curl http://localhost:4044/api/v1/ping
+curl http://localhost:4044/sna/v1/ping
 ```
 
 ### 2. Version API
 
-**Endpoint**: `GET /api/v1/version`
+**Endpoint**: `GET /sna/v1/version`
 
 **Response**:
 ```json
@@ -255,12 +256,12 @@ curl http://localhost:4044/api/v1/ping
 
 **Example**:
 ```bash
-curl http://localhost:4044/api/v1/version
+curl http://localhost:4044/sna/v1/version
 ```
 
 ### 3. Agent Request API
 
-**Endpoint**: `POST /api/v1/aa`
+**Endpoint**: `POST /sna/v1/aa`
 
 **Request Body**: JSON (any data)
 
@@ -273,7 +274,7 @@ curl http://localhost:4044/api/v1/version
 
 **Example**:
 ```bash
-curl -X POST http://localhost:4044/api/v1/aa \
+curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```
@@ -282,9 +283,9 @@ curl -X POST http://localhost:4044/api/v1/aa \
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/ping` | Health check endpoint |
-| GET | `/api/v1/version` | Get agent version information |
-| POST | `/api/v1/aa` | Handle agent requests |
+| GET | `/sna/v1/ping` | Health check endpoint |
+| GET | `/sna/v1/version` | Get agent version information |
+| POST | `/sna/v1/aa` | Handle agent requests |
 
 ## Troubleshooting
 
@@ -321,7 +322,7 @@ kubectl describe svc -n sahamatinet-agent sahamatinet-agent
 kubectl describe pod -n sahamatinet-agent | grep -i image
 
 # Test image pull manually
-docker pull srivatsak2002/sahamatinet-agent:1.0.0
+docker pull sahamatidevsecops/sahamatinet-agent:1.0.0
 ```
 
 ## Uninstallation
@@ -340,7 +341,7 @@ kubectl delete namespace sahamatinet-agent
 
 - **Repository**: `https://github.com/Sahamati/sahamatinet-agent-downloadables.git`
 - **Helm Chart Location**: `helmchart/`
-- **Docker Image**: `srivatsak2002/sahamatinet-agent:1.0.0`
+- **Docker Image**: `sahamatidevsecops/sahamatinet-agent:1.0.0`
 - **Service Port**: `4044`
 - **Default Namespace**: `sahamatinet-agent`
 

@@ -7,7 +7,7 @@ namespace: sahamatinet-agent
 
 # Image configuration
 image:
-  repository: srivatsak2002/sahamatinet-agent
+  repository: sahamatidevsecops/sahamatinet-agent
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 
@@ -35,7 +35,7 @@ resources:
 # Readiness probe
 readinessProbe:
   httpGet:
-    path: /api/v1/ping
+    path: /sna/v1/ping
     port: 4044
   initialDelaySeconds: 10
   periodSeconds: 60
@@ -62,7 +62,7 @@ ingress:
   namespace: sahamatinet-agent
   ssl_redirect: "true"
   cluster_issuer: letsencrypt-prod
-  health_path: "/api/v1/ping"
+  health_path: "/sna/v1/ping"
   api_name: sahamatinet-agent-api-ingress
   api_host: ""
   api_secret_name: ""
