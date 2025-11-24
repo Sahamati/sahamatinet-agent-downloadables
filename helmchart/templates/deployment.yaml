@@ -25,6 +25,10 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Chart.Name }}-config
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -33,9 +37,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          envFrom:
-           - configMapRef:
-              name: {{ .Chart.Name }}-config
+          volumeMounts:
+            - name: config
+              mountPath: /app/config/config.yaml
+              subPath: config.yaml
+              readOnly: true
           {{- if .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}

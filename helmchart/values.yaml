@@ -49,11 +49,16 @@ livenessProbe: {}
 terminationGracePeriodSeconds: 60
 preStopSleepSeconds: 30
 
-# Environment variables
+# Configuration data for Go application
 data:
-  port: 4044
-  node_env: "production"
-  service_name: "SNA (SahamatiNet Agent)"
+  port: "4044"
+  routes_prefix: "sna"
+  api_response_version: "1.0.0"
+  max_payload_size_in_kb: 4096
+  gomaxprocs: 0
+  error_code: ""
+  read_buffer_size: 4096
+  env: "production"
 
 # Ingress configuration (optional - disabled by default)
 # Only enable if you have an ingress controller and need external access

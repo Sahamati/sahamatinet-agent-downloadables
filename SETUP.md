@@ -61,17 +61,22 @@ image:
   tag: "1.0.0"
 ```
 
-### Environment Variables
+### Configuration Variables
 
-These are set via the `data` section in `values.yaml` and passed to the container:
+These are set via the `data` section in `values.yaml` and passed to the container as a `config.yaml` file:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `4044` | Port on which the service runs |
-| `NODE_ENV` | `production` | Environment (development/production) |
-| `SERVICE_NAME` | `SNA (SahamatiNet Agent)` | Service name |
+| `port` | `"4044"` | Port on which the service runs |
+| `routes_prefix` | `"sna"` | API route prefix (e.g., `/sna/v1/`) |
+| `api_response_version` | `"1.0.0"` | API response version |
+| `max_payload_size_in_kb` | `4096` | Maximum payload size in KB |
+| `gomaxprocs` | `0` | GOMAXPROCS value (0 = use all available CPUs) |
+| `error_code` | `""` | Error code configuration (empty by default) |
+| `read_buffer_size` | `4096` | Read buffer size in bytes |
+| `env` | `"production"` | Environment (development/production) |
 
-**Note**: `LOG_LEVEL` is also supported (default: `info`) but not currently in the ConfigMap. You can add it if needed.
+**Note**: These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
 
 ### Service Configuration
 
@@ -154,7 +159,8 @@ Create a `custom-values.yaml`:
 ```yaml
 replicaCount: 2
 data:
-  node_env: "production"
+  env: "production"
+  max_payload_size_in_kb: 8192
 hpa:
   maxReplicas: 5
 ```
@@ -170,7 +176,8 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent -f custom-values.
 ```bash
 helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set replicaCount=2 \
-  --set data.node_env=production
+  --set data.env=production \
+  --set data.max_payload_size_in_kb=8192
 ```
 
 ## Upgrading Deployment

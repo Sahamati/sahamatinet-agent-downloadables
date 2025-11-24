@@ -7,6 +7,13 @@ metadata:
     app: {{ .Chart.Name }}
     system.querying: "true"
 data:
-  PORT: "{{ .Values.data.port }}"
-  NODE_ENV: "{{ .Values.data.node_env }}"
-  SERVICE_NAME: "{{ .Values.data.service_name }}"
+  config.yaml: |
+    config:
+      PORT: "{{ .Values.data.port }}"
+      ROUTES_PREFIX: "{{ .Values.data.routes_prefix }}"
+      API_RESPONSE_VERSION: "{{ .Values.data.api_response_version }}"
+      MAX_PAYLOAD_SIZE_IN_KB: {{ .Values.data.max_payload_size_in_kb }}
+      GOMAXPROCS: {{ .Values.data.gomaxprocs }}
+      ERROR_CODE: "{{ .Values.data.error_code }}"
+      READ_BUFFER_SIZE: {{ .Values.data.read_buffer_size }}
+      ENV: "{{ .Values.data.env }}"
