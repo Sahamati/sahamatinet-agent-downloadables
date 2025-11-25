@@ -40,6 +40,8 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent
 helm install sahamatinet-agent ./helmchart --namespace sahamatinet-agent
 ```
 
+**Note**: Wait for approximately 1 minute after installation for the pod to become ready. The readiness probe performs health checks that may take some time to pass.
+
 ### 4. Verify Deployment
 
 ```bash
