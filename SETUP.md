@@ -212,6 +212,15 @@ curl -X POST http://localhost:4044/sna/v1/aa \
   -d '{"test": "data"}'
 ```
 
+```# If calling from another pod
+#given: sahamati-net-agent-pod-ip is the ip of the sahamatinet-agent pod
+
+curl -X POST http://sahamati-net-agent-pod-ip:4044/sna/v1/aa \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
+
+#Note: payload and response handling will be updated when the working agent image is given.```
+
 ### Method 2: kubectl exec
 
 ```bash
