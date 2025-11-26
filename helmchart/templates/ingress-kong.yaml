@@ -1,0 +1,30 @@
+{{- if and .Values.global .Values.global.enable_nginx_kong }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "{{ .Values.ingress.api_name }}-kong"
+  namespace: "{{ .Values.ingress.namespace }}"
+  annotations:
+    konghq.com/path: ~^/sna/v1/(.*)
+    konghq.com/rewrite: /sna/v1/$1
+    konghq.com/strip-path: "true"
+spec:
+  ingressClassName: "{{ .Values.global.kong_ingress_class }}"
+  tls:
+    - hosts:
+      - "{{ .Values.ingress.api_host }}"
+      secretName: "{{ .Values.ingress.api_secret_name }}-kong"
+  rules:
+    - host: "{{ .Values.ingress.api_host }}"
+      http:
+        paths:
+        - backend:
+            service:
+              name: "{{ .Chart.Name }}"
+              port:
+                name: http
+          path: /sna/v1/(.*)
+          pathType: Prefix
+
+{{- end }}
