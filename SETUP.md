@@ -331,7 +331,7 @@ curl http://localhost:4044/sna/v1/version
 | Key | Type | Description |
 |--------|----------|-------------|
 | callType | string | type of transaction call |
-| route | string | ReBit API type |
+| route | string | ReBit API endpoint route |
 | peerId | string | entity id of the FIP |
 | peerType | string | entity type of the peer - FIP |
 | customerId | string | customer id related to the transaction |
@@ -343,7 +343,7 @@ curl http://localhost:4044/sna/v1/version
 ```bash
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{ <json payload> }'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 ```
 
 ## API Summary Table
