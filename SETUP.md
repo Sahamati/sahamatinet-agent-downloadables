@@ -281,7 +281,42 @@ curl http://localhost:4044/sna/v1/version
 
 **Endpoint**: `POST /sna/v1/aa`
 
-**Request Body**: JSON (any data)
+**Request Body**:
+```json
+{
+  "callType": "requestIn",
+  "route": "/FI/Notification",
+  "peerId": "fip-xxx",
+  "peerType": "FIP",
+  "customerId": "customer_identifier@AA_identifier",
+  "httpStatus": 0,
+  "addlAttr": {},
+  "body": {
+    "ver": "2.0.0",
+    "timestamp": "2023-06-26T11:39:57.153Z",
+    "txnid": "0b811819-9044-4856-b0ee-8c88035f8858",
+    "Notifier": {
+      "type": "FIP",
+      "id": "FIP-1"
+    },
+    "FIStatusNotification": {
+      "sessionId": "XXXX0-XXXX-XXXX",
+      "sessionStatus": "ACTIVE",
+      "FIStatusResponse": [
+        {
+          "fipID": "FIP-1",
+          "Accounts": [
+            {
+              "linkRefNumber": "XXXX-XXXX-XXXX",
+              "FIStatus": "READY",
+              "description": ""
+            }
+          ]
+        }
+      ]
+    }
+  }
+}```
 
 **Response**:
 ```json
@@ -290,11 +325,24 @@ curl http://localhost:4044/sna/v1/version
 }
 ```
 
+## JSON Parameters
+
+| Key | Type | Description |
+|--------|----------|-------------|
+| callType | string | type of transaction call |
+| route | string | ReBit API type |
+| peerId | string | entity id of the FIP |
+| peerType | string | entity type of the peer - FIP |
+| customerId | string | customer id related to the transaction |
+| httpStatus | integer | the http status code, applicable only to responses |
+| addlAttr | json | optional, reserved for future use |
+| body| json | actual request or response body |
+
 **Example**:
 ```bash
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{ <json payload> }'
 ```
 
 ## API Summary Table
