@@ -316,7 +316,8 @@ curl http://localhost:4044/sna/v1/version
       ]
     }
   }
-}```
+}
+```
 
 **Response**:
 ```json
