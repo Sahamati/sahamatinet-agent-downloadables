@@ -77,6 +77,11 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
+| `datastore_path` | `"< dir path >"` | (store->sqlite->) Persistent volume directory path for data store |
+| `cert_file` | `" < cert file >"` | (tls->) Server cert file for SNA https server |
+| `key_file` | `" < key file >"` | (tls->) Server key file for SNA https server |
+
+Ensure that datastore_path, cert_file and key_file, are configured by the RE admin, for the SNA to run successfully.
 
 **Note**: These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
 
@@ -209,14 +214,14 @@ curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 
 # If calling from another pod
 #given: sahamati-net-agent-pod-ip is the ip of the sahamatinet-agent pod
 
 curl -X POST http://sahamati-net-agent-pod-ip:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 
 #Note: payload and response handling will be updated when the working agent image is given.
 ```
@@ -235,7 +240,7 @@ curl https://your-domain.com/sna/v1/ping
 curl https://your-domain.com/sna/v1/version
 curl -X POST https://your-domain.com/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 ```
 
 **Note**: When using Kong/App Gateway ingress, the path prefix `/sna/v1/` is used for external access and routes to `/sna/v1/` internally.
