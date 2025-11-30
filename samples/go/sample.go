@@ -16,7 +16,10 @@ below the definition here.
 
 func sna_SendTransactionInfo(body map[string]interface, callType, peerId, peerType, customerId, route string) error {
 
-	url := "https://" + sna_pod_url:port + "/sna/v1/aa"
+	//sna_pod_fqdn could be internal_sna_ip or internal_sna_fqdn
+	//port, 4044, or as configured by RE
+
+	url := "https://" + "< sna_pod_fqdn:port >" + "/sna/v1/aa"
 
 	payload := map[string]interface{}{
 		{
