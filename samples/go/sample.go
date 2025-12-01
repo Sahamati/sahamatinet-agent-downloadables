@@ -49,7 +49,7 @@ func sna_SendTransactionInfo(body map[string]interface, callType, peerId, peerTy
 
 /* ========================================================================= 
  This is a sample flow to make the SNA API call by AA before sending 
- an API request to FIP.
+ an API request to FIP, and after receiving the response from FIP.
  ex: sending Account Discovery Request
 ========================================================================= */
 
@@ -57,6 +57,8 @@ func executeDiscoveryRequest() (string, error) {
 	route := "/Accounts/discover"
 	fipId := "fip-Bank1-001"
 
+	rebitRequestBody := marshalRequestBody(...)
+	/*
 	// ReBIT defined request body
 	rebitRequestBody := map[string]interface{}{
 		"ver":      "2.0.0",
@@ -74,6 +76,7 @@ func executeDiscoveryRequest() (string, error) {
 		},
 		"FITypes": []string{"DEPOSIT"},
 	}
+	*/
 
 	...
 
@@ -92,20 +95,8 @@ func executeDiscoveryRequest() (string, error) {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	return string(respBody), nil
-}
-
-
-/* ========================================================================= 
- This is a sample flow to make the SNA API call by AA, when it receives a 
- response from FIP.
- ex: receiving Account Discovery Response
-========================================================================= */
-
- func handleAccountDiscoveryResponse() (string, error) {
-	route := "/Accounts/discover"
-	fipId := "fip-Bank1-001"
-
+	rebitResponseBody := unMarshalResponseBody(respBody)
+	/*
 	// ReBIT defined request body
 	rebitResponseBody := map[string]interface{}{
 		"ver": "2.0.0",
@@ -120,19 +111,17 @@ func executeDiscoveryRequest() (string, error) {
 		  }
 		]
 	  }
-
-	...
+	*/
 
 	//inform SahamatiNetAgent, about the response received
-	sna_SendTransactionInfo(rebitResponseBody, "responseIn", fipId, "FIP", "9876543210@myid-aa-001", route, httpStatusCode)
+	sna_SendTransactionInfo(rebitResponseBody, "responseIn", fipId, "FIP", "9876543210@myid-aa-001", route, resp.StatusCode)
 
-	//continue to process response from FIP
-	processFIPResponse(fipId, rebitResponseBody)
+	return string(respBody), nil
 }
 
 /* ========================================================================= 
  This is a sample flow to make the SNA API call by AA, when it receives a 
- notification from FIP.
+ notification from FIP and after sending the response to FIP.
  ex: receiving FI Notification Request
 ========================================================================= */
 
@@ -140,6 +129,8 @@ func handleFINotificationfromFIP() (string, error) {
 	route := "/FI/Notification"
 	fipId := "fip-Bank1-001"
 
+	rebitRequestBody := unMarshalRequestBody(...)
+	/*
 	// ReBIT defined request body
 	rebitRequestBody := map[string]interface{}{
 		"ver": "2.0.0",
@@ -166,6 +157,7 @@ func handleFINotificationfromFIP() (string, error) {
 		  ]
 		}
 	  }
+	*/
 
 	...
 
@@ -173,31 +165,20 @@ func handleFINotificationfromFIP() (string, error) {
 	sna_SendTransactionInfo(rebitRequestBody, "requestIn", fipId, "FIP", "9876543210@myid-aa-001", route, 0)
 
 	//continue to process response from FIP
-	processFIPNotification(fipId, rebitRequestBody)
-}
-
-/* ========================================================================= 
- This is a sample flow to make the SNA API call by AA, when it sends a 
- response back to FIP.
- ex: sending FI Notification Response
-========================================================================= */
-
-func executeFINotificationResponse() (string, error) {
-	route := "/FI/Notification"
-	fipId := "fip-Bank1-001"
-
+	rebitResponseBody, statusCode := processFIPNotification(fipId, rebitRequestBody)
+	/*
 	rebitResponseBody:= map[string]interface{} {
 		"ver": "2.0.0",
 		"timestamp": "2023-06-26T06:13:30.967+0000",
 		"txnid": "f35761ac-4a18-11e8-96ff-0277a9fbfedc",
 		"response": "OK"
 	  }
-
-	  ...
+	*/
 
 	//inform SahamatiNetAgent, about the response being sent
-	sna_SendTransactionInfo(rebitResponseBody, "responseOut", fipId, "FIP", "9876543210@myid-aa-001", route, httpStatusCode)
+	sna_SendTransactionInfo(rebitResponseBody, "responseOut", fipId, "FIP", "9876543210@myid-aa-001", route, statusCode)
 
 	//continue to process response to FIP
 	sendFIPNotificationResponse(fipId, rebitResponseBody)
+
 }
