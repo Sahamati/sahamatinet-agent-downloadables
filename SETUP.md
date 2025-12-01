@@ -53,7 +53,35 @@ tls:
 
 **Important**: If you created the secret with a different name, make sure `tls.secretName` in values.yaml matches exactly. The StatefulSet will automatically mount the TLS files from this secret.
 
-### 4. Deploy with Helm
+### 4. Configure Required Paths in values.yaml
+
+**MANDATORY**: Before deploying, you must set the following required paths in `helmchart/values.yaml`:
+
+1. **Set `datastore_path`** (always required):
+   ```yaml
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
+   ```
+
+2. **If HTTPS is enabled, set TLS certificate and key paths**:
+   ```yaml
+   data:
+     tls:
+       https_enabled: true
+       cert_file: "/etc/tls/tls.crt"  # Path where TLS cert will be mounted
+       key_file: "/etc/tls/tls.key"   # Path where TLS key will be mounted
+   ```
+
+**Important Notes**:
+- The `datastore_path` can be any directory path you prefer (e.g., `/app/datastore`, `/data/db`, `/var/lib/sna`)
+- The directory will be **automatically created** by Kubernetes when the volume is mounted
+- If `datastore_path` is empty, the pod will **fail to start** with a validation error
+- If `cert_file` or `key_file` are empty when HTTPS is enabled, the pod will **fail to start**
+- You can use different paths, but ensure `cert_file` and `key_file` match where the TLS secret is mounted (default: `/etc/tls/`)
+
+### 5. Deploy with Helm
 
 ```bash
 cd helmchart
@@ -74,7 +102,7 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set tls.secretName=sahamatinet-agent-tls
 ```
 
-### 5. Verify Deployment
+### 6. Verify Deployment
 
 ```bash
 kubectl get pods -n sahamatinet-agent
