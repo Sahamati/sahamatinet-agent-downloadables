@@ -77,6 +77,11 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
+| `datastore_path` | `"< dir path >"` | (store->sqlite->) Persistent volume directory path for data store |
+| `cert_file` | `" < cert file >"` | (tls->) Server cert file for SNA https server |
+| `key_file` | `" < key file >"` | (tls->) Server key file for SNA https server |
+
+Ensure that datastore_path, cert_file and key_file, are configured by the RE admin, for the SNA to run successfully.
 
 **Note**: These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
 
@@ -209,14 +214,14 @@ curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 
 # If calling from another pod
 #given: sahamati-net-agent-pod-ip is the ip of the sahamatinet-agent pod
 
 curl -X POST http://sahamati-net-agent-pod-ip:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 
 #Note: payload and response handling will be updated when the working agent image is given.
 ```
@@ -235,7 +240,7 @@ curl https://your-domain.com/sna/v1/ping
 curl https://your-domain.com/sna/v1/version
 curl -X POST https://your-domain.com/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 ```
 
 **Note**: When using Kong/App Gateway ingress, the path prefix `/sna/v1/` is used for external access and routes to `/sna/v1/` internally.
@@ -281,7 +286,43 @@ curl http://localhost:4044/sna/v1/version
 
 **Endpoint**: `POST /sna/v1/aa`
 
-**Request Body**: JSON (any data)
+**Request Body**:
+```json
+{
+  "callType": "requestIn",
+  "route": "/FI/Notification",
+  "peerId": "fip-xxx",
+  "peerType": "FIP",
+  "customerId": "customer_identifier@AA_identifier",
+  "httpStatus": 0,
+  "addlAttr": {},
+  "body": {
+    "ver": "2.0.0",
+    "timestamp": "2023-06-26T11:39:57.153Z",
+    "txnid": "0b811819-9044-4856-b0ee-8c88035f8858",
+    "Notifier": {
+      "type": "FIP",
+      "id": "FIP-1"
+    },
+    "FIStatusNotification": {
+      "sessionId": "XXXX0-XXXX-XXXX",
+      "sessionStatus": "ACTIVE",
+      "FIStatusResponse": [
+        {
+          "fipID": "FIP-1",
+          "Accounts": [
+            {
+              "linkRefNumber": "XXXX-XXXX-XXXX",
+              "FIStatus": "READY",
+              "description": ""
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
 
 **Response**:
 ```json
@@ -290,11 +331,24 @@ curl http://localhost:4044/sna/v1/version
 }
 ```
 
+## JSON Parameters
+
+| Key | Type | Description |
+|--------|----------|-------------|
+| callType | string | type of transaction call |
+| route | string | ReBit API endpoint route |
+| peerId | string | entity id of the FIP |
+| peerType | string | entity type of the peer - FIP |
+| customerId | string | customer id related to the transaction |
+| httpStatus | integer | the http status code, applicable only to responses |
+| addlAttr | json | optional, reserved for future use |
+| body| json | actual request or response body |
+
 **Example**:
 ```bash
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
-  -d '{"test": "data"}'
+  -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
 ```
 
 ## API Summary Table
