@@ -14,7 +14,7 @@ Please refer to the usage of this function call, in sample call flows shown
 below the definition here.
 ========================================================================= */
 
-func sna_SendTransactionInfo(body map[string]interface, callType, peerId, peerType, customerId, route string) error {
+func sna_SendTransactionInfo(body map[string]interface, callType, peerId, peerType, customerId, route string, statusCode int) error {
 
 	//sna_pod_fqdn could be internal_sna_ip or internal_sna_fqdn
 	//port, 4044, or as configured by RE
@@ -28,7 +28,7 @@ func sna_SendTransactionInfo(body map[string]interface, callType, peerId, peerTy
 			"peerId": peerId,
 			"peerType": peerType,
 			"customerId": customerId,
-			"httpStatus": 0,	//0, as it is not applicable to this call type
+			"httpStatus": statusCode,	// applicable to response flows only
 			"addlAttr": {},
 			"body": body
 		  }
