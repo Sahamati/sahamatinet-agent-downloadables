@@ -27,7 +27,61 @@ cd sahamatinet-agent-downloadables
 kubectl create namespace sahamatinet-agent
 ```
 
-### 3. Deploy with Helm
+### 3. Create TLS Secret (Optional - Only if HTTPS is enabled)
+
+If you want to enable HTTPS for the service, create a Kubernetes Secret with your TLS certificate and key:
+
+```bash
+kubectl create secret tls sahamatinet-agent-tls \
+  --cert=path/to/cert.pem \
+  --key=path/to/key.pem \
+  -n sahamatinet-agent
+```
+
+**Note**: 
+- `path/to/cert.pem` and `path/to/key.pem` are **local file paths** on your machine where the certificate and key files are located (e.g., `/home/user/certs/cert.pem` or `./certs/cert.pem`)
+- Replace these paths with the actual paths to your certificate and key files on your local filesystem
+- Replace `sahamatinet-agent-tls` with your desired secret name (must match `tls.secretName` in values.yaml)
+- Skip this step if you don't need HTTPS (set `data.tls.https_enabled: false` in values.yaml)
+
+**After creating the secret, update `helmchart/values.yaml`** to reference the secret name:
+
+```yaml
+tls:
+  secretName: "sahamatinet-agent-tls"  # Must match the secret name created above
+```
+
+**Important**: If you created the secret with a different name, make sure `tls.secretName` in values.yaml matches exactly. The StatefulSet will automatically mount the TLS files from this secret.
+
+### 4. Configure Required Paths in values.yaml
+
+**MANDATORY**: Before deploying, you must set the following required paths in `helmchart/values.yaml`:
+
+1. **Set `datastore_path`** (always required):
+   ```yaml
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
+   ```
+
+2. **If HTTPS is enabled, set TLS certificate and key paths**:
+   ```yaml
+   data:
+     tls:
+       https_enabled: true
+       cert_file: "/etc/tls/tls.crt"  # Path where TLS cert will be mounted
+       key_file: "/etc/tls/tls.key"   # Path where TLS key will be mounted
+   ```
+
+**Important Notes**:
+- The `datastore_path` can be any directory path you prefer (e.g., `/app/datastore`, `/data/db`, `/var/lib/sna`)
+- The directory will be **automatically created** by Kubernetes when the volume is mounted
+- If `datastore_path` is empty, the pod will **fail to start** with a validation error
+- If `cert_file` or `key_file` are empty when HTTPS is enabled, the pod will **fail to start**
+- You can use different paths, but ensure `cert_file` and `key_file` match where the TLS secret is mounted (default: `/etc/tls/`)
+
+### 5. Deploy with Helm
 
 ```bash
 cd helmchart
@@ -42,7 +96,13 @@ helm install sahamatinet-agent ./helmchart --namespace sahamatinet-agent
 
 **Note**: Wait for approximately 1 minute after installation for the pod to become ready. The readiness probe performs health checks that may take some time to pass.
 
-### 4. Verify Deployment
+**Alternative**: If you prefer to set the TLS secret name via command line instead of editing values.yaml:
+```bash
+helm install sahamatinet-agent . --namespace sahamatinet-agent \
+  --set tls.secretName=sahamatinet-agent-tls
+```
+
+### 6. Verify Deployment
 
 ```bash
 kubectl get pods -n sahamatinet-agent
@@ -77,8 +137,111 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
+| `store.sqlite.datastore_path` | `""` | **REQUIRED** - Path for SQLite database storage (must be a directory path, e.g., `/app/datastore`) |
+| `tls.https_enabled` | `true` | Enable/disable HTTPS |
+| `tls.cert_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS certificate file (mounted from secret, e.g., `/etc/tls/tls.crt`) |
+| `tls.key_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS key file (mounted from secret, e.g., `/etc/tls/tls.key`) |
 
-**Note**: These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
+**Important**: 
+- These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
+- **`datastore_path` is MANDATORY** - The pod will fail to start if this is not set.
+- **`cert_file` and `key_file` are MANDATORY** if `tls.https_enabled: true` - The pod will fail if these are not set when HTTPS is enabled.
+- You must provide these paths in your `values.yaml` before deploying.
+
+### SQLite Datastore Configuration
+
+**IMPORTANT**: The `datastore_path` is **MANDATORY** and must be set in `values.yaml`. The pod will fail to start if this path is empty.
+
+The SQLite database requires a directory path where the database file (`sna.db`) will be created. You have two options:
+
+#### Option 1: Persistent Storage (Recommended for Production)
+
+**Data persists across pod restarts** - Uses PersistentVolumeClaim (PVC)
+
+1. **Enable persistence in values.yaml**:
+   ```yaml
+   persistence:
+     enabled: true
+     storageClass: ""  # Use default storage class, or specify your storage class
+     accessMode: ReadWriteOnce
+     size: 1Gi
+   
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"  # Path where volume will be mounted
+   ```
+
+2. **Deploy** - The PVC will be automatically created and mounted at `/app/datastore`
+
+#### Option 2: Temporary Storage (For Testing Only)
+
+**Data is lost on pod restart** - Uses emptyDir volume
+
+1. **Disable persistence in values.yaml**:
+   ```yaml
+   persistence:
+     enabled: false
+   
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"
+   ```
+
+2. **Manually create the directory** (if needed for testing):
+   ```bash
+   # After pod is running, exec into the pod
+   kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- sh
+   
+   # Create the directory
+   mkdir -p /app/datastore
+   
+   # Verify it exists
+   ls -la /app/datastore
+   ```
+
+**Important Notes**:
+- The `datastore_path` must be a **directory path**, not a file path
+- The database file `sna.db` will be automatically created inside this directory
+- For production, always use `persistence.enabled: true` to prevent data loss
+- The directory is automatically created when the volume is mounted (no manual creation needed)
+
+### TLS Configuration
+
+**IMPORTANT**: If `tls.https_enabled: true`, both `cert_file` and `key_file` are **MANDATORY** and must be set in `values.yaml`. The pod will fail if these paths are empty when HTTPS is enabled.
+
+If you want to enable HTTPS for the service, you need to:
+
+1. **Create a Kubernetes Secret** with your TLS certificate and key:
+   ```bash
+   kubectl create secret tls sahamatinet-agent-tls \
+     --cert=path/to/cert.pem \
+     --key=path/to/key.pem \
+     -n sahamatinet-agent
+   ```
+   **Note**: `path/to/cert.pem` and `path/to/key.pem` are local file paths on your machine where the certificate and key files are located.
+
+2. **Update values.yaml** to reference the secret:
+   ```yaml
+   tls:
+     secretName: sahamatinet-agent-tls  # Name of the secret created above
+   
+   data:
+     tls:
+       https_enabled: true
+       cert_file: "/etc/tls/tls.crt"  # Path where cert will be mounted
+       key_file: "/etc/tls/tls.key"   # Path where key will be mounted
+   ```
+
+3. **Deploy the chart** - The secret will be automatically mounted as files in the pod at `/etc/tls/`.
+
+**Note**: 
+- The secret must exist before deploying the chart
+- If `tls.secretName` is empty, TLS will be disabled even if `https_enabled` is true
+- The certificate and key files will be mounted at `/etc/tls/tls.crt` and `/etc/tls/tls.key` respectively
+- **The paths in `tls.cert_file` and `tls.key_file` must match the mount paths** (typically `/etc/tls/tls.crt` and `/etc/tls/tls.key`)
+- **Both `cert_file` and `key_file` are REQUIRED** - The pod will fail to start if these are empty when HTTPS is enabled
 
 ### Service Configuration
 
@@ -88,6 +251,35 @@ service:
   port: 4044          # Service port
   targetPort: 4044    # Container port
 ```
+
+### Persistent Storage Configuration
+
+```yaml
+persistence:
+  enabled: true        # Enable persistent volume (recommended for production)
+  storageClass: ""     # Storage class name (empty = use default)
+  accessMode: ReadWriteOnce
+  size: 1Gi           # Storage size for SQLite database
+```
+
+**Note**: 
+- Set `enabled: true` for production (data persists across pod restarts)
+- Set `enabled: false` for testing (uses emptyDir, data lost on restart)
+- The volume is automatically mounted at the path specified in `data.store.sqlite.datastore_path`
+
+### Security Context Configuration
+
+The application runs as a non-root user (`sahamati`, UID 1000) for security. The security context is automatically configured:
+
+```yaml
+securityContext:
+  runAsUser: 1000        # Run as user sahamati (matches Dockerfile)
+  runAsGroup: 1000       # Run as group sahamati
+  runAsNonRoot: true     # Security best practice
+  fsGroup: 1000          # Ensures mounted volumes are writable by the user
+```
+
+**Important**: The `fsGroup: 1000` setting ensures that mounted volumes (especially the datastore PVC) have the correct permissions, allowing the non-root user to write to them. This is automatically configured and typically doesn't need to be changed.
 
 ### Resource Limits
 
@@ -181,6 +373,102 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set data.env=production \
   --set data.max_payload_size_in_kb=8192
 ```
+
+### Option 4: Configure TLS/HTTPS
+
+To enable HTTPS with TLS certificates:
+
+1. **Create the TLS secret** (if not already created):
+   ```bash
+   kubectl create secret tls sahamatinet-agent-tls \
+     --cert=path/to/cert.pem \
+     --key=path/to/key.pem \
+     -n sahamatinet-agent
+   ```
+   **Note**: `path/to/cert.pem` and `path/to/key.pem` are local file paths on your machine where the certificate and key files are located.
+
+2. **Update values.yaml** or use command line:
+   ```yaml
+   tls:
+     secretName: sahamatinet-agent-tls
+   
+   data:
+     tls:
+       https_enabled: true
+       cert_file: "/etc/tls/tls.crt"
+       key_file: "/etc/tls/tls.key"
+   ```
+
+   Or via command line:
+   ```bash
+   helm install sahamatinet-agent . --namespace sahamatinet-agent \
+     --set tls.secretName=sahamatinet-agent-tls \
+     --set data.tls.https_enabled=true
+   ```
+
+3. **Deploy** - The secret will be automatically mounted at `/etc/tls/` in the pod.
+
+**Note**: The secret must exist before deployment. The certificate and key files from the secret will be mounted as `tls.crt` and `tls.key` respectively.
+
+### Option 5: Configure SQLite Datastore and Persistent Storage
+
+#### For Production (Data Persists Across Pod Restarts)
+
+**Enable Persistent Volume Claim (PVC)**:
+
+```yaml
+persistence:
+  enabled: true
+  storageClass: ""  # Use default, or specify your storage class
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+data:
+  store:
+    sqlite:
+      datastore_path: "/app/datastore"  # Path where volume will be mounted
+```
+
+**Deploy** - The PVC will be automatically created and the directory will be available at `/app/datastore`. The SQLite database file (`sna.db`) will be created automatically in this directory.
+
+#### For Testing (Data Lost on Pod Restart)
+
+**Use emptyDir volume**:
+
+```yaml
+persistence:
+  enabled: false  # Uses emptyDir - data lost on pod restart
+
+data:
+  store:
+    sqlite:
+      datastore_path: "/app/datastore"
+```
+
+**Manual Directory Creation (if needed)**:
+
+After deployment, if the directory doesn't exist, you can create it manually:
+
+```bash
+# Exec into the pod
+kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- sh
+
+# Create the directory
+mkdir -p /app/datastore
+
+# Verify it exists
+ls -la /app/datastore
+
+# Exit
+exit
+```
+
+**Important Notes**:
+- When `persistence.enabled: true`, the directory is **automatically created** by Kubernetes when the volume is mounted
+- When `persistence.enabled: false`, you may need to manually create the directory (as shown above)
+- The `datastore_path` must be a **directory path** (e.g., `/app/datastore`), not a file path
+- The database file `sna.db` will be automatically created by SQLite inside the specified directory
+- For production, **always use `persistence.enabled: true`** to prevent data loss
 
 ## Upgrading Deployment
 
@@ -306,6 +594,75 @@ curl -X POST http://localhost:4044/sna/v1/aa \
 | POST | `/sna/v1/aa` | Handle agent requests |
 
 ## Troubleshooting
+
+### Required paths not set
+
+**Error**: Pod fails to start with validation errors or "mountPath cannot be empty"
+
+**Cause**: The following paths are **MANDATORY** and must be set in `values.yaml`:
+- `data.store.sqlite.datastore_path` - **ALWAYS REQUIRED**
+- `data.tls.cert_file` - **REQUIRED if `tls.https_enabled: true`**
+- `data.tls.key_file` - **REQUIRED if `tls.https_enabled: true`**
+
+**Solution**:
+1. **Set `datastore_path`** (always required):
+   ```yaml
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"  # Must not be empty - pod will fail if empty
+   ```
+
+2. **If HTTPS is enabled, set TLS paths**:
+   ```yaml
+   data:
+     tls:
+       https_enabled: true
+       cert_file: "/etc/tls/tls.crt"  # Must not be empty - pod will fail if empty
+       key_file: "/etc/tls/tls.key"   # Must not be empty - pod will fail if empty
+   ```
+
+3. **Verify all required paths are set** before deploying:
+   ```bash
+   # Check values.yaml
+   grep -A 3 "datastore_path:" helmchart/values.yaml
+   grep -A 3 "cert_file:" helmchart/values.yaml
+   grep -A 3 "key_file:" helmchart/values.yaml
+   ```
+
+### SQLite datastore path issues
+
+**Error**: `data store path empty` or `db is not writable`
+
+**Solution**:
+1. **Check the datastore_path is set** in values.yaml:
+   ```yaml
+   data:
+     store:
+       sqlite:
+         datastore_path: "/app/datastore"  # Must not be empty
+   ```
+
+2. **If using emptyDir (testing)**, manually create the directory:
+   ```bash
+   kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- mkdir -p /app/datastore
+   ```
+
+3. **If using PVC**, verify the volume is mounted:
+   ```bash
+   kubectl describe pod -n sahamatinet-agent -l app.kubernetes.io/name=sahamatinet-agent | grep -A 5 "Mounts:"
+   ```
+
+4. **Check PVC status** (if persistence is enabled):
+   ```bash
+   kubectl get pvc -n sahamatinet-agent
+   kubectl describe pvc -n sahamatinet-agent datastore-sahamatinet-agent-0
+   ```
+
+5. **Verify directory exists in pod**:
+   ```bash
+   kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- ls -la /app/datastore
+   ```
 
 ### Pods not starting
 

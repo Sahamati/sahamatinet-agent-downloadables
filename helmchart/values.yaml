@@ -1,29 +1,22 @@
-# Default values for sahamatinet-agent
-# This chart installs SahamatiNet Agent service with minimal dependencies
-
 replicaCount: 1
 
 namespace: sahamatinet-agent
 
-# Image configuration
 image:
   repository: sahamatidevsecops/sahamatinet-agent
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 
-# Image pull secrets (optional - only needed for private registries)
 imagePullSecrets: []
 
 nameOverride: ""
 fullnameOverride: ""
 
-# Service configuration
 service:
   type: ClusterIP
   port: 4044
   targetPort: 4044
 
-# Resource limits
 resources:
   limits:
     cpu: 100m
@@ -32,7 +25,6 @@ resources:
     cpu: 50m
     memory: 256Mi
 
-# Readiness probe
 readinessProbe:
   httpGet:
     path: /sna/v1/ping
@@ -43,13 +35,18 @@ readinessProbe:
   timeoutSeconds: 5
   successThreshold: 1
 
-# Liveness probe (optional)
 livenessProbe: {}
 
 terminationGracePeriodSeconds: 60
 preStopSleepSeconds: 30
 
-# Configuration data for Go application
+# Application runs as non-root user (UID 1000)
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  fsGroup: 1000
+
 data:
   port: "4044"
   routes_prefix: "sna"
@@ -59,9 +56,18 @@ data:
   error_code: ""
   read_buffer_size: 4096
   env: "production"
+  store:
+    sqlite:
+      datastore_path: ""
+  tls:
+    https_enabled: true
+    cert_file: ""
+    key_file: ""
 
-# Ingress configuration (optional - disabled by default)
-# Only enable if you have an ingress controller and need external access
+# Required if tls.https_enabled is true
+tls:
+  secretName: "sahamatinet-agent-tls"
+
 ingress:
   enabled: false
   namespace: sahamatinet-agent
@@ -72,17 +78,21 @@ ingress:
   api_host: ""
   api_secret_name: ""
 
-# Global settings for ingress (only needed if ingress is enabled)
 global:
   enable_nginx_kong: false
   enable_app_gateway: false
   kong_ingress_class: kong
   app_gateway_ingress_class: azure/application-gateway
 
-# Horizontal Pod Autoscaler (optional - enabled by default)
 hpa:
   enabled: true
   minReplicas: 1
   maxReplicas: 3
   cpuTarget: 80
   scaleDownWindow: 300
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
