@@ -58,11 +58,11 @@ data:
   env: "production"
   store:
     db:
-      datastore_path: "/app/datastore"
+      datastore_path: ""
   tls:
     https_enabled: true
-    cert_file: "/etc/tls/tls.crt"
-    key_file: "/etc/tls/tls.key"
+    cert_file: ""
+    key_file: ""
 
 # Required if tls.https_enabled is true
 tls:
