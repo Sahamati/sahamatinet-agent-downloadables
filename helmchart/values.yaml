@@ -57,7 +57,7 @@ data:
   read_buffer_size: 4096
   env: "production"
   store:
-    sqlite:
+    db:
       datastore_path: ""
   tls:
     https_enabled: true

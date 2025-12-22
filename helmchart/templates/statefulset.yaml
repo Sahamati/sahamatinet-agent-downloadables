@@ -74,7 +74,7 @@ spec:
               readOnly: true
             {{- end }}
             - name: datastore
-              mountPath: {{ .Values.data.store.sqlite.datastore_path }}
+              mountPath: {{ .Values.data.store.db.datastore_path }}
           {{- if .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
