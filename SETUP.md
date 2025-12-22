@@ -61,7 +61,7 @@ tls:
    ```yaml
    data:
      store:
-       sqlite:
+       db:
          datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
    ```
 
@@ -137,7 +137,7 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
-| `store.sqlite.datastore_path` | `""` | **REQUIRED** - Path for SQLite database storage (must be a directory path, e.g., `/app/datastore`) |
+| `store.db.datastore_path` | `""` | **REQUIRED** - Path for SQLite database storage (must be a directory path, e.g., `/app/datastore`) |
 | `tls.https_enabled` | `true` | Enable/disable HTTPS |
 | `tls.cert_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS certificate file (mounted from secret, e.g., `/etc/tls/tls.crt`) |
 | `tls.key_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS key file (mounted from secret, e.g., `/etc/tls/tls.key`) |
@@ -168,7 +168,7 @@ The SQLite database requires a directory path where the database file (`sna.db`)
    
    data:
      store:
-       sqlite:
+       db:
          datastore_path: "/app/datastore"  # Path where volume will be mounted
    ```
 
@@ -185,7 +185,7 @@ The SQLite database requires a directory path where the database file (`sna.db`)
    
    data:
      store:
-       sqlite:
+       db:
          datastore_path: "/app/datastore"
    ```
 
@@ -265,7 +265,7 @@ persistence:
 **Note**: 
 - Set `enabled: true` for production (data persists across pod restarts)
 - Set `enabled: false` for testing (uses emptyDir, data lost on restart)
-- The volume is automatically mounted at the path specified in `data.store.sqlite.datastore_path`
+- The volume is automatically mounted at the path specified in `data.store.db.datastore_path`
 
 ### Security Context Configuration
 
@@ -425,7 +425,7 @@ persistence:
 
 data:
   store:
-    sqlite:
+    db:
       datastore_path: "/app/datastore"  # Path where volume will be mounted
 ```
 
@@ -441,7 +441,7 @@ persistence:
 
 data:
   store:
-    sqlite:
+    db:
       datastore_path: "/app/datastore"
 ```
 
@@ -495,6 +495,12 @@ kubectl port-forward -n sahamatinet-agent svc/sahamatinet-agent 4044:4044
 # In another terminal - test the APIs
 curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
+curl -X POST http://localhost:4044/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "secret": "your-entity-secret"
+  }'
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
@@ -521,6 +527,12 @@ kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- \
 ```bash
 curl https://your-domain.com/sna/v1/ping
 curl https://your-domain.com/sna/v1/version
+curl -X POST https://your-domain.com/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "secret": "your-entity-secret"
+  }'
 curl -X POST https://your-domain.com/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
@@ -530,7 +542,7 @@ curl -X POST https://your-domain.com/sna/v1/aa \
 
 ## API Endpoints
 
-The SahamatiNet Agent service provides three APIs:
+The SahamatiNet Agent service provides four APIs:
 
 ### 1. Health Check API
 
@@ -565,7 +577,58 @@ curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
 ```
 
-### 3. Agent Request API
+### 3. Entity Registration API
+
+**Endpoint**: `POST /sna/v1/entity/register`
+
+**Description**: This API is used to register an entity's secret with the SahamatiNet Agent (SNA). The SNA stores the secret in its database and uses it for token generation, which is required for making SLA (Service Level Agreement) API calls.
+
+**When to Call**:
+- **Initial Setup**: Call this API when initializing your application/service to register your entity's secret with SNA
+- **Secret Reset**: Call this API whenever you perform a secret reset to update the stored secret in SNA's database
+
+**Request Body**:
+```json
+{
+  "entity_id": "your-entity-id",
+  "secret": "your-entity-secret"
+}
+```
+
+**Request Parameters**:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `entity_id` | string | Yes | Unique identifier for your entity |
+| `secret` | string | Yes | Secret key for your entity (used for token generation) |
+
+**Response**:
+```json
+{
+  "message": "Entity registration received successfully",
+  "entity_id": "your-entity-id",
+  "status": "registered"
+}
+```
+
+**Example**:
+```bash
+curl -X POST http://localhost:4044/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "secret": "your-entity-secret"
+  }'
+```
+
+**Important Notes**:
+- The secret is securely stored in SNA's database and is used for generating authentication tokens
+- Tokens generated using this secret are required for making SLA API calls
+- You must call this API during your application/service initialization
+- You must call this API again whenever you reset your entity's secret
+- The entity_id and secret are both required fields - the request will fail if either is missing or empty
+
+### 4. Agent Request API
 
 **Endpoint**: `POST /sna/v1/aa`
 
@@ -641,6 +704,7 @@ curl -X POST http://localhost:4044/sna/v1/aa \
 |--------|----------|-------------|
 | GET | `/sna/v1/ping` | Health check endpoint |
 | GET | `/sna/v1/version` | Get agent version information |
+| POST | `/sna/v1/entity/register` | Register entity secret (call during initialization and secret reset) |
 | POST | `/sna/v1/aa` | Handle agent requests |
 
 ## Troubleshooting
@@ -650,7 +714,7 @@ curl -X POST http://localhost:4044/sna/v1/aa \
 **Error**: Pod fails to start with validation errors or "mountPath cannot be empty"
 
 **Cause**: The following paths are **MANDATORY** and must be set in `values.yaml`:
-- `data.store.sqlite.datastore_path` - **ALWAYS REQUIRED**
+- `data.store.db.datastore_path` - **ALWAYS REQUIRED**
 - `data.tls.cert_file` - **REQUIRED if `tls.https_enabled: true`**
 - `data.tls.key_file` - **REQUIRED if `tls.https_enabled: true`**
 
@@ -659,7 +723,7 @@ curl -X POST http://localhost:4044/sna/v1/aa \
    ```yaml
    data:
      store:
-       sqlite:
+       db:
          datastore_path: "/app/datastore"  # Must not be empty - pod will fail if empty
    ```
 
@@ -689,7 +753,7 @@ curl -X POST http://localhost:4044/sna/v1/aa \
    ```yaml
    data:
      store:
-       sqlite:
+       db:
          datastore_path: "/app/datastore"  # Must not be empty
    ```
 
