@@ -18,8 +18,8 @@ data:
       READ_BUFFER_SIZE: {{ .Values.data.read_buffer_size }}
       ENV: "{{ .Values.data.env }}"
       store:
-        sqlite:
-          datastore_path: "{{ .Values.data.store.sqlite.datastore_path }}"
+        db:
+          datastore_path: "{{ .Values.data.store.db.datastore_path }}"
       tls:
         https_enabled: {{ .Values.data.tls.https_enabled }}
         cert_file: "{{ .Values.data.tls.cert_file }}"

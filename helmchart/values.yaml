@@ -57,12 +57,12 @@ data:
   read_buffer_size: 4096
   env: "production"
   store:
-    sqlite:
-      datastore_path: ""
+    db:
+      datastore_path: "/app/datastore"
   tls:
     https_enabled: true
-    cert_file: ""
-    key_file: ""
+    cert_file: "/etc/tls/tls.crt"
+    key_file: "/etc/tls/tls.key"
 
 # Required if tls.https_enabled is true
 tls:
