@@ -484,7 +484,7 @@ helm upgrade sahamatinet-agent . --namespace sahamatinet-agent -f custom-values.
 
 ## Testing the APIs
 
-Once deployed, you can test the three APIs:
+Once deployed, you can test the four APIs:
 
 ### Method 1: Port Forward (Recommended)
 
@@ -495,12 +495,23 @@ kubectl port-forward -n sahamatinet-agent svc/sahamatinet-agent 4044:4044
 # In another terminal - test the APIs
 curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
+
+# Entity Registration - Using Secret
 curl -X POST http://localhost:4044/sna/v1/entity/register \
   -H "Content-Type: application/json" \
   -d '{
     "entity_id": "your-entity-id",
     "secret": "your-entity-secret"
   }'
+
+# Entity Registration - Using Token
+curl -X POST http://localhost:4044/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "token": "your-entity-token"
+  }'
+
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
@@ -527,12 +538,23 @@ kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- \
 ```bash
 curl https://your-domain.com/sna/v1/ping
 curl https://your-domain.com/sna/v1/version
+
+# Entity Registration - Using Secret
 curl -X POST https://your-domain.com/sna/v1/entity/register \
   -H "Content-Type: application/json" \
   -d '{
     "entity_id": "your-entity-id",
     "secret": "your-entity-secret"
   }'
+
+# Entity Registration - Using Token
+curl -X POST https://your-domain.com/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "token": "your-entity-token"
+  }'
+
 curl -X POST https://your-domain.com/sna/v1/aa \
   -H "Content-Type: application/json" \
   -d '{"callType":"requestIn",.......,"description":""}]}]}}}}'
@@ -581,17 +603,35 @@ curl http://localhost:4044/sna/v1/version
 
 **Endpoint**: `POST /sna/v1/entity/register`
 
-**Description**: This API is used to register an entity's secret with the SahamatiNet Agent (SNA). The SNA stores the secret securely in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET.
+**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET.
 
 **When to Call**:
-- **Initial Setup**: Call this API when initializing your application/service to register your entity's secret with SNA
-- **Secret Reset**: Call this API whenever you perform a secret reset to update the stored secret in SNA's database
 
-**Request Body**:
+**If using `secret`**:
+- **Initial Setup**: Call this API when initializing your application/service to register your entity's secret with SNA
+- **Secret Reset**: Call this API when you perform a secret reset to update the stored secret in SNA's database
+- **Note**: Once the secret is registered, SNA will automatically generate tokens when the old token expires. You need to call this API again if your secret changes.
+
+**If using `token`**:
+- **Initial Setup**: Call this API when initializing your application/service to register your entity's token with SNA
+- **Token Refresh**: Call this API **before your old token expires** (recommended: every 12 hours or as per your token expiration policy) to provide a new token
+- **Note**: Since you are providing the token directly, you must proactively refresh it before expiration to ensure continuous service
+
+**Request Body Options**:
+
+**Option 1: Using Secret**
 ```json
 {
   "entity_id": "your-entity-id",
   "secret": "your-entity-secret"
+}
+```
+
+**Option 2: Using Token**
+```json
+{
+  "entity_id": "your-entity-id",
+  "token": "your-entity-token"
 }
 ```
 
@@ -600,7 +640,8 @@ curl http://localhost:4044/sna/v1/version
 | Key | Type | Required | Description |
 |-----|------|----------|-------------|
 | `entity_id` | string | Yes | Unique identifier for your entity |
-| `secret` | string | Yes | Secret key for your entity (used for token generation) |
+| `secret` | string | Conditional | Secret key for your entity (used for token generation). Either `secret` or `token` must be provided |
+| `token` | string | Conditional | Authentication token for your entity. Either `secret` or `token` must be provided |
 
 **Response**:
 ```json
@@ -611,7 +652,9 @@ curl http://localhost:4044/sna/v1/version
 }
 ```
 
-**Example**:
+**Examples**:
+
+**Using Secret**:
 ```bash
 curl -X POST http://localhost:4044/sna/v1/entity/register \
   -H "Content-Type: application/json" \
@@ -621,12 +664,24 @@ curl -X POST http://localhost:4044/sna/v1/entity/register \
   }'
 ```
 
+**Using Token**:
+```bash
+curl -X POST http://localhost:4044/sna/v1/entity/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity_id": "your-entity-id",
+    "token": "your-entity-token"
+  }'
+```
+
 **Important Notes**:
-- The secret is securely stored in SNA's database and is used for generating authentication tokens
-- Tokens generated using this secret are required for making SLA API calls
+- **Either `secret` OR `token` must be provided** - the request will fail if both are missing
+- If both `secret` and `token` are provided, the `token` will be used
+- **Using Secret**: The secret is securely stored in SNA's database and is used for generating authentication tokens. Tokens are automatically generated when the old token expires. You only need to call this API again if your secret changes.
+- **Using Token**: You must call this API before your old token expires (recommended: every 12 hours or as per your token expiration policy) to ensure continuous service. SNA will use the provided token directly.
+- Tokens are required for making SLA API calls
 - You must call this API during your application/service initialization
-- You must call this API again whenever you reset your entity's secret
-- The entity_id and secret are both required fields - the request will fail if either is missing or empty
+- The `entity_id` is always required - the request will fail if it is missing or empty
 
 ### 4. Agent Request API
 
