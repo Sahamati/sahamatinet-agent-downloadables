@@ -603,7 +603,7 @@ curl http://localhost:4044/sna/v1/version
 
 **Endpoint**: `POST /sna/v1/entity/register`
 
-**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required for making SLA (Service Level Agreement) API calls.
+**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET.
 
 **When to Call**:
 
