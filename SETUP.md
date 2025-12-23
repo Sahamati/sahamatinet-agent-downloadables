@@ -609,8 +609,8 @@ curl http://localhost:4044/sna/v1/version
 
 **If using `secret`**:
 - **Initial Setup**: Call this API when initializing your application/service to register your entity's secret with SNA
-- **Secret Reset**: Call this API only when you perform a secret reset to update the stored secret in SNA's database
-- **Note**: Once the secret is registered, SNA will automatically generate tokens when the old token expires. You only need to call this API again if your secret changes.
+- **Secret Reset**: Call this API when you perform a secret reset to update the stored secret in SNA's database
+- **Note**: Once the secret is registered, SNA will automatically generate tokens when the old token expires. You need to call this API again if your secret changes.
 
 **If using `token`**:
 - **Initial Setup**: Call this API when initializing your application/service to register your entity's token with SNA
