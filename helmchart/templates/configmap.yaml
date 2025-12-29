@@ -20,6 +20,9 @@ data:
       store:
         db:
           datastore_path: "{{ .Values.data.store.db.datastore_path }}"
+      sla:
+        sla_api_url: "{{ .Values.data.sla.sla_api_url }}"
+        token_generation_base_url: "{{ .Values.data.sla.token_generation_base_url }}"
       tls:
         https_enabled: {{ .Values.data.tls.https_enabled }}
         cert_file: "{{ .Values.data.tls.cert_file }}"

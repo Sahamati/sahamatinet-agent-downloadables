@@ -5,9 +5,7 @@ namespace: sahamatinet-agent
 image:
   repository: sahamatidevsecops/sahamatinet-agent
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
-
-imagePullSecrets: []
+  tag: "1.0.1"
 
 nameOverride: ""
 fullnameOverride: ""
@@ -58,11 +56,14 @@ data:
   env: "production"
   store:
     db:
-      datastore_path: ""
+      datastore_path: "/app/datastore"
+  sla:
+    sla_api_url: "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "https://api.dev.sahamati.org.in/iam/v1"
   tls:
     https_enabled: true
-    cert_file: ""
-    key_file: ""
+    cert_file: "/etc/tls/tls.crt"
+    key_file: "/etc/tls/tls.key"
 
 # Required if tls.https_enabled is true
 tls:
@@ -83,13 +84,6 @@ global:
   enable_app_gateway: false
   kong_ingress_class: kong
   app_gateway_ingress_class: azure/application-gateway
-
-hpa:
-  enabled: true
-  minReplicas: 1
-  maxReplicas: 3
-  cpuTarget: 80
-  scaleDownWindow: 300
 
 persistence:
   enabled: true
