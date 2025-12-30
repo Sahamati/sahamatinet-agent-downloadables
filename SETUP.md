@@ -138,8 +138,8 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
 | `store.db.datastore_path` | `""` | **REQUIRED** - Path for SQLite database storage (must be a directory path, e.g., `/app/datastore`) |
-| `sla.sla_api_url` | `"https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"` | SLA API endpoint URL for pushing SLA data |
-| `sla.token_generation_base_url` | `"https://api.dev.sahamati.org.in/iam/v1"` | Base URL for token generation API |
+| `sla.sla_api_url` | `""` | SLA API endpoint URL for pushing SLA data (e.g., `"https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"`) |
+| `sla.token_generation_base_url` | `""` | Base URL for token generation API (e.g., `"https://api.dev.sahamati.org.in/iam/v1"`) |
 | `tls.https_enabled` | `true` | Enable/disable HTTPS |
 | `tls.cert_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS certificate file (mounted from secret, e.g., `/etc/tls/tls.crt`) |
 | `tls.key_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS key file (mounted from secret, e.g., `/etc/tls/tls.key`) |
@@ -306,8 +306,8 @@ replicaCount: 1  # Number of pod replicas
 ```yaml
 data:
   sla:
-    sla_api_url: "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"  # SLA API endpoint URL
-    token_generation_base_url: "https://api.dev.sahamati.org.in/iam/v1"   # Token generation base URL
+    sla_api_url: ""  # SLA API endpoint URL (e.g., "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push")
+    token_generation_base_url: ""  # Token generation base URL (e.g., "https://api.dev.sahamati.org.in/iam/v1")
 ```
 
 **Note**: 
@@ -359,8 +359,8 @@ data:
   env: "production"
   max_payload_size_in_kb: 8192
   sla:
-    sla_api_url: "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
-    token_generation_base_url: "https://api.dev.sahamati.org.in/iam/v1"
+    sla_api_url: ""  # Set your SLA API endpoint URL
+    token_generation_base_url: ""  # Set your token generation base URL
 ```
 
 Then install:
