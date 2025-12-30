@@ -56,14 +56,14 @@ data:
   env: "production"
   store:
     db:
-      datastore_path: "/app/datastore"
+      datastore_path: ""
   sla:
     sla_api_url: "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
     token_generation_base_url: "https://api.dev.sahamati.org.in/iam/v1"
   tls:
     https_enabled: true
-    cert_file: "/etc/tls/tls.crt"
-    key_file: "/etc/tls/tls.key"
+    cert_file: ""
+    key_file: ""
 
 # Required if tls.https_enabled is true
 tls:
