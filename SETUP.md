@@ -75,7 +75,7 @@ kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent
          datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
    ```
 
-2. **Configure the credentials secret name
+2. **Configure the credentials secret name**
    ```yaml
    data:
      store:
@@ -118,19 +118,9 @@ kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent
 - If `datastore_path` is empty, the pod will **fail to start** with a validation error
 - If `cert_file` or `key_file` are empty when HTTPS is enabled, the pod will **fail to start**
 - You can use different paths, but ensure `cert_file` and `key_file` match where the TLS secret is mounted (default: `/etc/tls/`)
+  
 
-### 5. Configure the secret credentials.json
-
-Configure the entityID and the secret
-
-```bash
-kubectl create secret tls sahamatinet-agent-tls \
-  --cert=path/to/cert.pem \
-  --key=path/to/key.pem \
-  -n sahamatinet-agent
-```
-
-### 6. Deploy with Helm
+### 5. Deploy with Helm
 
 ```bash
 cd helmchart
@@ -151,7 +141,7 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set tls.secretName=sahamatinet-agent-tls
 ```
 
-### 7. Verify Deployment
+### 6. Verify Deployment
 
 ```bash
 kubectl get pods -n sahamatinet-agent
