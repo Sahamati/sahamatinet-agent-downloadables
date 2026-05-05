@@ -3,9 +3,9 @@ replicaCount: 1
 namespace: sahamatinet-agent
 
 image:
-  repository: sahamatidevsecops/sahamatinet-agent
+  repository: sahamatidevsecops/sna
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  tag: "v2.0.0"
 
 imagePullSecrets: []
 
@@ -19,11 +19,11 @@ service:
 
 resources:
   limits:
-    cpu: 100m
-    memory: 256Mi
+    cpu: "5"
+    memory: 6Gi
   requests:
-    cpu: 50m
-    memory: 256Mi
+    cpu: 200m
+    memory: 4Gi
 
 readinessProbe:
   httpGet:
@@ -35,12 +35,11 @@ readinessProbe:
   timeoutSeconds: 5
   successThreshold: 1
 
-livenessProbe: {}
-
 terminationGracePeriodSeconds: 60
 preStopSleepSeconds: 30
 
-# Application runs as non-root user (UID 1000)
+# Security Context (required for non-root user)
+# Application runs as non-root user (UID 1000) as defined in Dockerfile
 securityContext:
   runAsUser: 1000
   runAsGroup: 1000
@@ -59,14 +58,30 @@ data:
   store:
     db:
       datastore_path: ""
+  sla:
+    sla_api_url: "" # e.g. https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "" # e.g. https://api.dev.sahamati.org.in/iam/v1"
+    aa_webhook_url: "" # e.g. https://webhook.site/f407be06-462d-47ab-ad48-5d8ba8a259ea"
+    jws_signing_enabled: false
+    jws_private_key_path: "/app/certs/sla_jws_private.pem"  # Path where JWS key is mounted
+    log_percentile_values: false
+  entityConfig:
+    credentials: "/app/secrets/credentials.json"  # Path where credentials file is mounted 
   tls:
-    https_enabled: true
+    https_enabled: false
     cert_file: ""
     key_file: ""
+    secretName: ""  # Name of the Kubernetes secret containing TLS certificates. If empty, TLS will be disabled
 
-# Required if tls.https_enabled is true
-tls:
-  secretName: "sahamatinet-agent-tls"
+# Optional: Mount credentials.json from a Secret (for entityConfig.credentials)
+credentialsSecret:
+  secretName: "sahamatinet-agent-credentials"   # e.g. sahamatinet-agent-credentials
+  secretKey: "credentials.json"  # key in the Secret that holds the file content
+
+# Optional: Mount JWS private key from a Secret (for sla.jws_private_key_path)
+jwsPrivateKeySecret:
+  secretName: ""   # e.g. sahamatinet-agent-jws-key
+  secretKey: "sla_jws_private.pem"  # key in the Secret that holds the PEM content
 
 ingress:
   enabled: false

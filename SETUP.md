@@ -10,7 +10,7 @@ Guide to deploy SahamatiNet Agent using Helm chart in Kubernetes.
 
 ## Docker Image
 
-**Image**: `sahamatidevsecops/sahamatinet-agent:1.0.0`
+**Image**: `sahamatidevsecops/sna:v2.0.0`
 
 ## Quick Start
 
@@ -53,7 +53,17 @@ tls:
 
 **Important**: If you created the secret with a different name, make sure `tls.secretName` in values.yaml matches exactly. The StatefulSet will automatically mount the TLS files from this secret.
 
-### 4. Configure Required Paths in values.yaml
+### 4. Create the credentials file with entityId and secret
+
+This secret has to be updated everytime it is renewed
+
+```bash
+kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent 
+--from-literal=credentials.json='{"entityId":"<your-entity-id>","entitySecret":"<your-entity-secret>"}' 
+--dry-run=client -o yaml | kubectl apply -n sahamatinet-agent -f -
+```
+
+### 5. Configure Required Paths in values.yaml
 
 **MANDATORY**: Before deploying, you must set the following required paths in `helmchart/values.yaml`:
 
@@ -65,7 +75,19 @@ tls:
          datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
    ```
 
-2. **If HTTPS is enabled, set TLS certificate and key paths**:
+2. **Configure the credentials secret name
+   ```yaml
+   data:
+     store:
+       db:
+         datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
+   # Optional: Mount credentials.json from a Secret (for entityConfig.credentials)
+   credentialsSecret:
+     secretName: "sahamatinet-agent-credentials"   # e.g. sahamatinet-agent-credentials
+     secretKey: "credentials.json"  # key in the Secret that holds the file content
+   ```
+
+3. **If HTTPS is enabled, set TLS certificate and key paths**:
    ```yaml
    data:
      tls:
@@ -73,15 +95,42 @@ tls:
        cert_file: "/etc/tls/tls.crt"  # Path where TLS cert will be mounted
        key_file: "/etc/tls/tls.key"   # Path where TLS key will be mounted
    ```
+   Note: If both app and sna are running within the same cluster, we recommend to run sna in http mode.
+
+4. **Configure the SLA API backend URL**:
+   ```yaml
+   data:
+     sla:
+      sla_api_url: "" #e.g. https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
+   ```
+
+5. **Configure the Token fetch URL**:
+   ```yaml
+   data:
+     sla:
+      token_generation_base_url: "" # e.g. https://api.dev.sahamati.org.in/iam/v1"
+   ```
 
 **Important Notes**:
-- The `datastore_path` can be any directory path you prefer (e.g., `/app/datastore`, `/data/db`, `/var/lib/sna`)
+- The `datastore_path` can be any directory path (e.g., `/app/datastore`, `/data/db`, `/var/lib/sna`)
+- It is preferred and recommended that it be a path in the persistent volume storage, to ensure that no data is lost on restarts.
 - The directory will be **automatically created** by Kubernetes when the volume is mounted
 - If `datastore_path` is empty, the pod will **fail to start** with a validation error
 - If `cert_file` or `key_file` are empty when HTTPS is enabled, the pod will **fail to start**
 - You can use different paths, but ensure `cert_file` and `key_file` match where the TLS secret is mounted (default: `/etc/tls/`)
 
-### 5. Deploy with Helm
+### 5. Configure the secret credentials.json
+
+Configure the entityID and the secret
+
+```bash
+kubectl create secret tls sahamatinet-agent-tls \
+  --cert=path/to/cert.pem \
+  --key=path/to/key.pem \
+  -n sahamatinet-agent
+```
+
+### 6. Deploy with Helm
 
 ```bash
 cd helmchart
@@ -102,7 +151,7 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set tls.secretName=sahamatinet-agent-tls
 ```
 
-### 6. Verify Deployment
+### 7. Verify Deployment
 
 ```bash
 kubectl get pods -n sahamatinet-agent

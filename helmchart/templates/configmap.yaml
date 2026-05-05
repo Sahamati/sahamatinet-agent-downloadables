@@ -20,6 +20,15 @@ data:
       store:
         db:
           datastore_path: "{{ .Values.data.store.db.datastore_path }}"
+      sla:
+        sla_api_url: "{{ .Values.data.sla.sla_api_url }}"
+        token_generation_base_url: "{{ .Values.data.sla.token_generation_base_url }}"
+        aa_webhook_url: "{{ .Values.data.sla.aa_webhook_url }}"
+        jws_signing_enabled: {{ .Values.data.sla.jws_signing_enabled }}
+        jws_private_key_path: "{{ .Values.data.sla.jws_private_key_path }}"
+        log_percentile_values: {{ .Values.data.sla.log_percentile_values }}
+      entityConfig:
+        credentials: "{{ .Values.data.entityConfig.credentials }}"
       tls:
         https_enabled: {{ .Values.data.tls.https_enabled }}
         cert_file: "{{ .Values.data.tls.cert_file }}"

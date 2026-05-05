@@ -9,6 +9,9 @@ metadata:
     konghq.com/path: ~^/sna/v1/(.*)
     konghq.com/rewrite: /sna/v1/$1
     konghq.com/strip-path: "true"
+    {{- if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}
+    konghq.com/backend-protocol: https
+    {{- end }}
 spec:
   ingressClassName: "{{ .Values.global.kong_ingress_class }}"
   tls:
@@ -23,7 +26,7 @@ spec:
             service:
               name: "{{ .Chart.Name }}"
               port:
-                name: http
+                name: {{ if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}https{{ else }}http{{ end }}
           path: /sna/v1/(.*)
           pathType: Prefix
 

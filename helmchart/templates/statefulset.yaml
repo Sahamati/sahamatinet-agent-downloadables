@@ -46,10 +46,26 @@ spec:
         - name: config
           configMap:
             name: {{ .Chart.Name }}-config
-        {{- if and .Values.data.tls.https_enabled .Values.tls.secretName }}
+        {{- if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}
         - name: tls-certs
           secret:
-            secretName: {{ .Values.tls.secretName }}
+            secretName: {{ .Values.data.tls.secretName }}
+        {{- end }}
+        {{- if .Values.credentialsSecret.secretName }}
+        - name: credentials
+          secret:
+            secretName: {{ .Values.credentialsSecret.secretName }}
+            items:
+              - key: {{ .Values.credentialsSecret.secretKey }}
+                path: credentials.json
+        {{- end }}
+        {{- if .Values.jwsPrivateKeySecret.secretName }}
+        - name: jws-private-key
+          secret:
+            secretName: {{ .Values.jwsPrivateKeySecret.secretName }}
+            items:
+              - key: {{ .Values.jwsPrivateKeySecret.secretKey }}
+                path: sla_jws_private.pem
         {{- end }}
         {{- if not .Values.persistence.enabled }}
         - name: datastore
@@ -68,9 +84,19 @@ spec:
               mountPath: /app/config/config.yaml
               subPath: config.yaml
               readOnly: true
-            {{- if and .Values.data.tls.https_enabled .Values.tls.secretName }}
+            {{- if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}
             - name: tls-certs
               mountPath: /etc/tls
+              readOnly: true
+            {{- end }}
+            {{- if .Values.credentialsSecret.secretName }}
+            - name: credentials
+              mountPath: /app/secrets
+              readOnly: true
+            {{- end }}
+            {{- if .Values.jwsPrivateKeySecret.secretName }}
+            - name: jws-private-key
+              mountPath: /app/certs
               readOnly: true
             {{- end }}
             - name: datastore
@@ -83,7 +109,7 @@ spec:
             httpGet:
               path: {{ .Values.readinessProbe.httpGet.path }}
               port: {{ .Values.readinessProbe.httpGet.port }}
-              {{- if and .Values.data.tls.https_enabled .Values.tls.secretName }}
+              {{- if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}
               scheme: HTTPS
               {{- end }}
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}

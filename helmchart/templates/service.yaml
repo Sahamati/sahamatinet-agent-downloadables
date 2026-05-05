@@ -5,12 +5,20 @@ metadata:
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "sahamatinetagent.labels" . | nindent 4 }}
+  {{- if and .Values.global.enable_nginx_kong .Values.data.tls.https_enabled .Values.data.tls.secretName }}
+  annotations:
+    konghq.com/protocol: https
+    konghq.com/backend-protocol: https
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
-      name: http
+      name: {{ if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}https{{ else }}http{{ end }}
+      {{- if and .Values.data.tls.https_enabled .Values.data.tls.secretName }}
+      appProtocol: https
+      {{- end }}
   selector:
     {{- include "sahamatinetagent.selectorLabels" . | nindent 4 }}
