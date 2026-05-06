@@ -77,11 +77,7 @@ kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent
 
 2. **Configure the credentials secret name**
    ```yaml
-   data:
-     store:
-       db:
-         datastore_path: "/app/datastore"  # Set your desired path (directory will be created automatically)
-   # Optional: Mount credentials.json from a Secret (for entityConfig.credentials)
+   # Mount credentials.json from a Secret (for entityConfig.credentials)
    credentialsSecret:
      secretName: "sahamatinet-agent-credentials"   # e.g. sahamatinet-agent-credentials
      secretKey: "credentials.json"  # key in the Secret that holds the file content
@@ -176,10 +172,12 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
-| `store.db.datastore_path` | `""` | **REQUIRED** - Path for SQLite database storage (must be a directory path, e.g., `/app/datastore`) |
+| `store.db.datastore_path` | `""` | **REQUIRED** - Path for disk-based database storage (must be a directory path, e.g., `/app/datastore`) - A persistent volume |
 | `tls.https_enabled` | `true` | Enable/disable HTTPS |
 | `tls.cert_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS certificate file (mounted from secret, e.g., `/etc/tls/tls.crt`) |
 | `tls.key_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS key file (mounted from secret, e.g., `/etc/tls/tls.key`) |
+|`data.sla.sla_api_url` | `""` | **REQUIRED** - Sahamati's SLA API to which the sla inputs are pushed |
+|`data.sla.token_generation_base_url` | `""` | **REQUIRED** - Sahamati's Entity token generation baseURL |
 
 **Important**: 
 - These values are stored in a `config.yaml` file in the ConfigMap and mounted to the container.
@@ -187,7 +185,7 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 - **`cert_file` and `key_file` are MANDATORY** if `tls.https_enabled: true` - The pod will fail if these are not set when HTTPS is enabled.
 - You must provide these paths in your `values.yaml` before deploying.
 
-### SQLite Datastore Configuration
+### BadgerDB Datastore Configuration
 
 **IMPORTANT**: The `datastore_path` is **MANDATORY** and must be set in `values.yaml`. The pod will fail to start if this path is empty.
 
@@ -325,11 +323,11 @@ securityContext:
 ```yaml
 resources:
   limits:
-    cpu: 100m
-    memory: 256Mi
+    cpu: "5"
+    memory: 6Gi
   requests:
-    cpu: 50m
-    memory: 256Mi
+    cpu: 200m
+    memory: 4Gi
 ```
 
 ### Replica Count
@@ -340,9 +338,11 @@ replicaCount: 1  # Number of pod replicas
 
 ### Horizontal Pod Autoscaler (HPA)
 
+Disable Autoscaling at present. Only one instance should be running.
+
 ```yaml
 hpa:
-  enabled: true        # Enable/disable HPA
+  enabled: false       # Disable Enable/disable HPA
   minReplicas: 1       # Minimum number of replicas
   maxReplicas: 3       # Maximum number of replicas
   cpuTarget: 80        # CPU utilization target (%)
@@ -449,7 +449,7 @@ To enable HTTPS with TLS certificates:
 
 **Note**: The secret must exist before deployment. The certificate and key files from the secret will be mounted as `tls.crt` and `tls.key` respectively.
 
-### Option 5: Configure SQLite Datastore and Persistent Storage
+### Option 5: Configure BadgerDB Datastore and Persistent Storage
 
 #### For Production (Data Persists Across Pod Restarts)
 
@@ -642,7 +642,7 @@ curl http://localhost:4044/sna/v1/version
 
 **Endpoint**: `POST /sna/v1/entity/register`
 
-**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET.
+**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET. Note: This is not required, if the credentials file with entityID and secret has been mounted (as a file or as a secret)
 
 **When to Call**:
 
