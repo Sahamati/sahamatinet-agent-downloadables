@@ -70,7 +70,10 @@ func main() {
 	fipTxnID := newTxnID()
 	fipStatus := 200
 
-	// Pass your existing body as-is — a struct, map[string]any, or json.RawMessage for a raw JSON string.
+	// Body accepts three forms — pass whichever you already have:
+	//   json.RawMessage:  json.RawMessage(`{"ver":"2.0.0","txnid":"..."}`)
+	//   struct:           MyRequest{Ver: "2.0.0", TxnID: fipTxnID}
+	//   map[string]any:   map[string]any{"ver": "2.0.0", "txnid": fipTxnID}
 	consentBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + fipTxnID + `"}`)
 
 	incomingRequest := snalib.AARequest{
@@ -102,6 +105,9 @@ func main() {
 	aaTxnID := newTxnID()
 	aaStatus := 200
 
+	// json.RawMessage:  json.RawMessage(`{"ver":"2.0.0","txnid":"..."}`)
+	// struct:           MyRequest{Ver: "2.0.0", TxnID: aaTxnID}
+	// map[string]any:   map[string]any{"ver": "2.0.0", "txnid": aaTxnID}
 	fiBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + aaTxnID + `"}`)
 
 	outgoingRequest := snalib.AARequest{

@@ -62,7 +62,10 @@ public class Main {
         // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
         String fipTxnId = UUID.randomUUID().toString();
 
-        // Pass your existing body as-is — a POJO, Map, or raw JSON string, whatever you already have.
+        // body accepts three forms — pass whichever you already have:
+        //   raw JSON string:  .body("{\"ver\":\"2.0.0\",\"txnid\":\"...\"}")
+        //   POJO:             .body(myConsentNotificationObject)
+        //   Map:              .body(Map.of("ver", "2.0.0", "txnid", fipTxnId))
         String consentBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + fipTxnId + "\"}";
 
         AARequest incomingRequest = AARequest.builder()
@@ -93,6 +96,9 @@ public class Main {
         // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
         String aaTxnId = UUID.randomUUID().toString();
 
+        // raw JSON string:  .body("{\"ver\":\"2.0.0\",\"txnid\":\"...\"}")
+        // POJO:             .body(myFIRequestObject)
+        // Map:              .body(Map.of("ver", "2.0.0", "txnid", aaTxnId))
         String fiRequestBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + aaTxnId + "\"}";
 
         AARequest outgoingRequest = AARequest.builder()
