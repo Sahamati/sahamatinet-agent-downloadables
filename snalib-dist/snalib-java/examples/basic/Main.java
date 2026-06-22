@@ -62,13 +62,16 @@ public class Main {
         // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
         String fipTxnId = UUID.randomUUID().toString();
 
+        // Pass your existing body as-is — a POJO, Map, or raw JSON string, whatever you already have.
+        String consentBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + fipTxnId + "\"}";
+
         AARequest incomingRequest = AARequest.builder()
                 .callType("requestIn")
                 .route("/Consent/Notification")
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
-                .body(Map.of("txnid", fipTxnId, "ver", "2.0.0"))
+                .body(consentBody)
                 .build();
 
         AARequest outgoingResponse = AARequest.builder()
@@ -78,7 +81,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
-                .body(Map.of("txnid", fipTxnId, "ver", "2.0.0"))
+                .body(consentBody)
                 .build();
 
         handleIncoming(client, incomingRequest);
@@ -90,13 +93,15 @@ public class Main {
         // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
         String aaTxnId = UUID.randomUUID().toString();
 
+        String fiRequestBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + aaTxnId + "\"}";
+
         AARequest outgoingRequest = AARequest.builder()
                 .callType("requestOut")
                 .route("/FI/request")
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
-                .body(Map.of("txnid", aaTxnId, "ver", "2.0.0"))
+                .body(fiRequestBody)
                 .build();
 
         AARequest incomingResponse = AARequest.builder()
@@ -106,7 +111,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
-                .body(Map.of("txnid", aaTxnId, "ver", "2.0.0"))
+                .body(fiRequestBody)
                 .addlAttr(Map.of("correlationId", "corr-test-789"))
                 .build();
 

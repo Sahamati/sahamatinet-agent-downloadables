@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -69,13 +70,16 @@ func main() {
 	fipTxnID := newTxnID()
 	fipStatus := 200
 
+	// Pass your existing body as-is — a struct, map[string]any, or json.RawMessage for a raw JSON string.
+	consentBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + fipTxnID + `"}`)
+
 	incomingRequest := snalib.AARequest{
 		CallType:   "requestIn",
 		Route:      "/Consent/Notification",
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
-		Body:       map[string]any{"txnid": fipTxnID, "ver": "2.0.0"},
+		Body:       consentBody,
 	}
 
 	outgoingResponse := snalib.AARequest{
@@ -85,7 +89,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &fipStatus,
-		Body:       map[string]any{"txnid": fipTxnID, "ver": "2.0.0"},
+		Body:       consentBody,
 	}
 
 	handleIncoming(ctx, snaNewClient, incomingRequest)
@@ -98,13 +102,15 @@ func main() {
 	aaTxnID := newTxnID()
 	aaStatus := 200
 
+	fiBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + aaTxnID + `"}`)
+
 	outgoingRequest := snalib.AARequest{
 		CallType:   "requestOut",
 		Route:      "/FI/request",
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
-		Body:       map[string]any{"txnid": aaTxnID, "ver": "2.0.0"},
+		Body:       fiBody,
 	}
 
 	incomingResponse := snalib.AARequest{
@@ -114,7 +120,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &aaStatus,
-		Body:       map[string]any{"txnid": aaTxnID, "ver": "2.0.0"},
+		Body:       fiBody,
 		AddlAttr:   map[string]any{"correlationId": "corr-test-789"},
 	}
 
