@@ -28,6 +28,7 @@ public final class AAClient {
         payload.put("peerId", req.getPeerId());
         payload.put("peerType", req.getPeerType());
         payload.put("customerId", req.getCustomerId());
+        payload.put("txnCorId", req.getTxnCorId());
         Object rawBody = req.getBody();
         JsonElement bodyElement = rawBody instanceof String
                 ? gson.fromJson((String) rawBody, JsonElement.class)

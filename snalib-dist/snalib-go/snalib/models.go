@@ -42,6 +42,7 @@ type AARequest struct {
 	PeerType   string
 	CustomerID string
 	HTTPStatus *int           // required for responseIn/responseOut; nil otherwise
+	TxnCorID   string
 	Body       any            // required — pass a struct, map[string]any, or json.RawMessage for a raw JSON string
 	AddlAttr   map[string]any // optional
 }

@@ -74,6 +74,7 @@ public class Main {
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
+                .txnCorId("corr-test-001")
                 .body(consentBody)
                 .build();
 
@@ -84,6 +85,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
+                .txnCorId("corr-test-001")
                 .body(consentBody)
                 .build();
 
@@ -107,6 +109,7 @@ public class Main {
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
+                .txnCorId("corr-test-002")
                 .body(fiRequestBody)
                 .build();
 
@@ -117,6 +120,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
+                .txnCorId("corr-test-002")
                 .body(fiRequestBody)
                 .addlAttr(Map.of("correlationId", "corr-test-789"))
                 .build();

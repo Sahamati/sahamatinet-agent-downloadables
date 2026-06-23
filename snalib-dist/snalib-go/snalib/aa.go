@@ -21,6 +21,7 @@ func (a *AAClient) Dispatch(ctx context.Context, req AARequest) (*DispatchRespon
 		"peerId":     req.PeerID,
 		"peerType":   req.PeerType,
 		"customerId": req.CustomerID,
+		"txnCorId":   req.TxnCorID,
 		"body":       req.Body,
 	}
 	if req.HTTPStatus != nil {

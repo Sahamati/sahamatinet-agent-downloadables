@@ -82,6 +82,7 @@ func main() {
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
+		TxnCorID:   "corr-test-001",
 		Body:       consentBody,
 	}
 
@@ -92,6 +93,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &fipStatus,
+		TxnCorID:   "corr-test-001",
 		Body:       consentBody,
 	}
 
@@ -116,6 +118,7 @@ func main() {
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
+		TxnCorID:   "corr-test-002",
 		Body:       fiBody,
 	}
 
@@ -126,6 +129,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &aaStatus,
+		TxnCorID:   "corr-test-002",
 		Body:       fiBody,
 		AddlAttr:   map[string]any{"correlationId": "corr-test-789"},
 	}
