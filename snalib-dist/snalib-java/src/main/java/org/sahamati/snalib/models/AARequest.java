@@ -9,7 +9,7 @@ public final class AARequest {
     private final String peerType;
     private final String customerId;
     private final Integer httpStatus;
-    private final Map<String, Object> body;
+    private final Object body;
     private final Map<String, Object> addlAttr;
 
     private AARequest(Builder b) {
@@ -29,7 +29,7 @@ public final class AARequest {
     public String getPeerType() { return peerType; }
     public String getCustomerId() { return customerId; }
     public Integer getHttpStatus() { return httpStatus; }
-    public Map<String, Object> getBody() { return body; }
+    public Object getBody() { return body; }
     public Map<String, Object> getAddlAttr() { return addlAttr; }
 
     public static Builder builder() { return new Builder(); }
@@ -41,7 +41,7 @@ public final class AARequest {
         private String peerType;
         private String customerId;
         private Integer httpStatus;
-        private Map<String, Object> body;
+        private Object body;
         private Map<String, Object> addlAttr;
 
         public Builder callType(String callType) { this.callType = callType; return this; }
@@ -50,7 +50,8 @@ public final class AARequest {
         public Builder peerType(String peerType) { this.peerType = peerType; return this; }
         public Builder customerId(String customerId) { this.customerId = customerId; return this; }
         public Builder httpStatus(Integer httpStatus) { this.httpStatus = httpStatus; return this; }
-        public Builder body(Map<String, Object> body) { this.body = body; return this; }
+        public Builder body(Object body) { this.body = body; return this; }
+        public Builder body(String json) { this.body = json; return this; }
         public Builder addlAttr(Map<String, Object> addlAttr) { this.addlAttr = addlAttr; return this; }
 
         public AARequest build() { return new AARequest(this); }

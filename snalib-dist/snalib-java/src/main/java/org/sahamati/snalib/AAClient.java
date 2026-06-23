@@ -1,6 +1,7 @@
 package org.sahamati.snalib;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import org.sahamati.snalib.errors.SNAUnexpectedResponseError;
 import org.sahamati.snalib.models.AARequest;
@@ -27,7 +28,11 @@ public final class AAClient {
         payload.put("peerId", req.getPeerId());
         payload.put("peerType", req.getPeerType());
         payload.put("customerId", req.getCustomerId());
-        payload.put("body", req.getBody());
+        Object rawBody = req.getBody();
+        JsonElement bodyElement = rawBody instanceof String
+                ? gson.fromJson((String) rawBody, JsonElement.class)
+                : gson.toJsonTree(rawBody);
+        payload.put("body", bodyElement);
         if (req.getHttpStatus() != null) payload.put("httpStatus", req.getHttpStatus());
         if (req.getAddlAttr() != null) payload.put("addlAttr", req.getAddlAttr());
 
