@@ -20,27 +20,34 @@ public final class AAClient {
         this.gson = gson;
     }
 
-    // A successful return means the service accepted the request for telemetry processing. Please check the SNA logs and verify if the request has been processed successfully.
+    // A successful return means the service accepted the request for telemetry processing.
+    // Check isSuccess() on the returned response to detect failures — never throws.
     public DispatchResponse dispatch(AARequest req) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("callType", req.getCallType());
-        payload.put("route", req.getRoute());
-        payload.put("peerId", req.getPeerId());
-        payload.put("peerType", req.getPeerType());
-        payload.put("customerId", req.getCustomerId());
-        Object rawBody = req.getBody();
-        JsonElement bodyElement = rawBody instanceof String
-                ? gson.fromJson((String) rawBody, JsonElement.class)
-                : gson.toJsonTree(rawBody);
-        payload.put("body", bodyElement);
-        if (req.getHttpStatus() != null) payload.put("httpStatus", req.getHttpStatus());
-        if (req.getAddlAttr() != null) payload.put("addlAttr", req.getAddlAttr());
-
-        String body = client.post("/sna/v1/aa", gson.toJson(payload));
         try {
-            return gson.fromJson(body, DispatchResponse.class);
-        } catch (JsonSyntaxException e) {
-            throw new SNAUnexpectedResponseError(200, "failed to decode dispatch response: " + e.getMessage(), body);
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("callType", req.getCallType());
+            payload.put("route", req.getRoute());
+            payload.put("peerId", req.getPeerId());
+            payload.put("peerType", req.getPeerType());
+            payload.put("customerId", req.getCustomerId());
+            payload.put("txnCorId", req.getTxnCorId());
+            Object rawBody = req.getBody();
+            JsonElement bodyElement = rawBody instanceof String
+                    ? gson.fromJson((String) rawBody, JsonElement.class)
+                    : gson.toJsonTree(rawBody);
+            payload.put("body", bodyElement);
+            if (req.getHttpStatus() != null) payload.put("httpStatus", req.getHttpStatus());
+            if (req.getAddlAttr() != null) payload.put("addlAttr", req.getAddlAttr());
+
+            String responseBody = client.post("/sna/v1/aa", gson.toJson(payload));
+            try {
+                return gson.fromJson(responseBody, DispatchResponse.class);
+            } catch (JsonSyntaxException e) {
+                throw new SNAUnexpectedResponseError(200, "failed to decode dispatch response: " + e.getMessage(), responseBody);
+            }
+        } catch (RuntimeException e) {
+            client.logWarn(e.getMessage());
+            return DispatchResponse.error(e.getMessage());
         }
     }
 }

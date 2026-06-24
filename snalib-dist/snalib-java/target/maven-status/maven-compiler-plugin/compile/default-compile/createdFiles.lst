@@ -8,6 +8,7 @@ org/sahamati/snalib/errors/SNAConnectionError.class
 org/sahamati/snalib/models/RegisterResponse.class
 org/sahamati/snalib/models/RegisterRequest.class
 org/sahamati/snalib/models/VersionResponse.class
+org/sahamati/snalib/SNAResponse.class
 org/sahamati/snalib/SNAConfig$Builder.class
 org/sahamati/snalib/utils/SnaLibLogger$JsonHandler.class
 org/sahamati/snalib/errors/SNAServerError.class

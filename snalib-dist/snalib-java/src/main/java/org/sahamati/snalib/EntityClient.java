@@ -20,26 +20,38 @@ public final class EntityClient {
         this.gson = gson;
     }
 
+    // Check isSuccess() on the returned response to detect failures — never throws.
     public RegisterResponse register(RegisterRequest req) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("entity_id", req.getEntityId());
-        if (req.getSecret() != null && !req.getSecret().isBlank()) payload.put("secret", req.getSecret());
-        if (req.getToken() != null && !req.getToken().isBlank()) payload.put("token", req.getToken());
-
-        String body = client.post("/sna/v1/entity/register", gson.toJson(payload));
         try {
-            return gson.fromJson(body, RegisterResponse.class);
-        } catch (JsonSyntaxException e) {
-            throw new SNAUnexpectedResponseError(200, "failed to decode register response: " + e.getMessage(), body);
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("entity_id", req.getEntityId());
+            if (req.getSecret() != null && !req.getSecret().isBlank()) payload.put("secret", req.getSecret());
+            if (req.getToken() != null && !req.getToken().isBlank()) payload.put("token", req.getToken());
+
+            String responseBody = client.post("/sna/v1/entity/register", gson.toJson(payload));
+            try {
+                return gson.fromJson(responseBody, RegisterResponse.class);
+            } catch (JsonSyntaxException e) {
+                throw new SNAUnexpectedResponseError(200, "failed to decode register response: " + e.getMessage(), responseBody);
+            }
+        } catch (RuntimeException e) {
+            client.logWarn(e.getMessage());
+            return RegisterResponse.error(e.getMessage());
         }
     }
 
+    // Check isSuccess() on the returned response to detect failures — never throws.
     public TokenResponse getToken() {
-        String body = client.get("/sna/v1/entity/token/generate");
         try {
-            return gson.fromJson(body, TokenResponse.class);
-        } catch (JsonSyntaxException e) {
-            throw new SNAUnexpectedResponseError(200, "failed to decode token response: " + e.getMessage(), body);
+            String responseBody = client.get("/sna/v1/entity/token/generate");
+            try {
+                return gson.fromJson(responseBody, TokenResponse.class);
+            } catch (JsonSyntaxException e) {
+                throw new SNAUnexpectedResponseError(200, "failed to decode token response: " + e.getMessage(), responseBody);
+            }
+        } catch (RuntimeException e) {
+            client.logWarn(e.getMessage());
+            return TokenResponse.error(e.getMessage());
         }
     }
 }

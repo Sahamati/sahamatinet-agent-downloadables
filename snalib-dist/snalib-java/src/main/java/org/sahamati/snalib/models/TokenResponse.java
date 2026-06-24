@@ -1,6 +1,8 @@
 package org.sahamati.snalib.models;
 
-public final class TokenResponse {
+import org.sahamati.snalib.SNAResponse;
+
+public class TokenResponse extends SNAResponse {
     private String ver;
     private String timestamp;
     private String txnId;
@@ -22,4 +24,10 @@ public final class TokenResponse {
     public String getTokenType() { return tokenType; }
     public int getNotBeforePolicy() { return notBeforePolicy; }
     public String getScope() { return scope; }
+
+    public static TokenResponse error(String msg) {
+        TokenResponse r = new TokenResponse();
+        r.markError(msg);
+        return r;
+    }
 }

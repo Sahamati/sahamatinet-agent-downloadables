@@ -14,18 +14,21 @@ import (
 
 func main() {
 	// Instantiate once at application startup — reuse across your entire application lifetime.
-	// NewClient calls /ping internally; it retries with backoff and returns an error if unreachable.
+	// NewClient calls /ping internally; it retries with backoff. If unreachable, a warning is logged
+	// and the error is returned alongside a valid client — the SDK never halts caller execution.
+	// API calls on a client that failed to connect will surface the failure as error return values.
 	snaNewClient, err := snalib.NewClient(snalib.Config{
 		BaseURL:    "http://localhost:4044",
 		LogEnabled: true, // structured JSON logs to stderr; omit or set false in production if you handle logs yourself
+		// OnWarning: func(msg string) { myLogger.Warn(msg) }, // optional: route SDK warnings to your own logger
 		// MaxRetries:    3,              // default
 		// RetryInterval: time.Second,    // default; doubles each attempt
 		// MaxWait:       15*time.Second, // default total across all retries
 		// Timeout:       30*time.Second, // default per-request
 	})
 	if err != nil {
-		// SNAConnectionError — service unreachable after all retries
-		log.Fatalf("failed to connect to SNA: %v", err)
+		// SNAConnectionError — service unreachable after all retries; client is still valid and usable
+		log.Printf("warning: SNA unreachable at startup: %v", err)
 	}
 
 	ctx := context.Background()
@@ -66,15 +69,16 @@ func main() {
 
 	// --- FIP-initiated flow: requestIn → responseOut ---
 	// FIP sends a request to AA; AA processes and responds back.
-	// txnID and route must be identical across the pair — SNA keys the lookup on peerId+txnID+route.
-	fipTxnID := newTxnID()
+	// Generate one txnCorID for this flow — use the same value for both requestIn and responseOut.
+	// SNA uses txnCorID to correlate the pair.
+	fipTxnCorID := newTxnID()
 	fipStatus := 200
 
 	// Body accepts three forms — pass whichever you already have:
 	//   json.RawMessage:  json.RawMessage(`{"ver":"2.0.0","txnid":"..."}`)
-	//   struct:           MyRequest{Ver: "2.0.0", TxnID: fipTxnID}
-	//   map[string]any:   map[string]any{"ver": "2.0.0", "txnid": fipTxnID}
-	consentBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + fipTxnID + `"}`)
+	//   struct:           MyRequest{Ver: "2.0.0", TxnID: "..."}
+	//   map[string]any:   map[string]any{"ver": "2.0.0", "txnid": "..."}
+	consentBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + newTxnID() + `"}`)
 
 	incomingRequest := snalib.AARequest{
 		CallType:   "requestIn",
@@ -82,6 +86,7 @@ func main() {
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
+		TxnCorID:   fipTxnCorID,
 		Body:       consentBody,
 	}
 
@@ -92,6 +97,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &fipStatus,
+		TxnCorID:   fipTxnCorID, // same txnCorID as requestIn
 		Body:       consentBody,
 	}
 
@@ -101,14 +107,16 @@ func main() {
 
 	// --- AA-initiated flow: requestOut → responseIn ---
 	// AA sends a request to FIP; FIP responds back to AA.
-	// txnID and route must be identical across the pair — SNA keys the lookup on peerId+txnID+route.
-	aaTxnID := newTxnID()
+	// Generate one txnCorID for this flow — use the same value for both requestOut and responseIn.
+	// SNA uses txnCorID to correlate the pair.
+	aaTxnCorID := newTxnID()
 	aaStatus := 200
 
-	// json.RawMessage:  json.RawMessage(`{"ver":"2.0.0","txnid":"..."}`)
-	// struct:           MyRequest{Ver: "2.0.0", TxnID: aaTxnID}
-	// map[string]any:   map[string]any{"ver": "2.0.0", "txnid": aaTxnID}
-	fiBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + aaTxnID + `"}`)
+	// Body accepts three forms — pass whichever you already have:
+	//   json.RawMessage:  json.RawMessage(`{"ver":"2.0.0","txnid":"..."}`)
+	//   struct:           MyRequest{Ver: "2.0.0", TxnID: "..."}
+	//   map[string]any:   map[string]any{"ver": "2.0.0", "txnid": "..."}
+	fiBody := json.RawMessage(`{"ver":"2.0.0","txnid":"` + newTxnID() + `"}`)
 
 	outgoingRequest := snalib.AARequest{
 		CallType:   "requestOut",
@@ -116,6 +124,7 @@ func main() {
 		PeerID:     "fip-test-001",
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
+		TxnCorID:   aaTxnCorID,
 		Body:       fiBody,
 	}
 
@@ -126,6 +135,7 @@ func main() {
 		PeerType:   "FIP",
 		CustomerID: "user-test@sahamati",
 		HTTPStatus: &aaStatus,
+		TxnCorID:   aaTxnCorID, // same txnCorID as requestOut
 		Body:       fiBody,
 		AddlAttr:   map[string]any{"correlationId": "corr-test-789"},
 	}

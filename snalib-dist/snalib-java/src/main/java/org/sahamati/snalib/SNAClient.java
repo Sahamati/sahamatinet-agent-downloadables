@@ -7,8 +7,8 @@ import org.sahamati.snalib.errors.SNAConnectionError;
 import org.sahamati.snalib.errors.SNANotImplementedError;
 import org.sahamati.snalib.errors.SNAServerError;
 import org.sahamati.snalib.errors.SNAValidationError;
-import org.sahamati.snalib.utils.SnaLibLogger;
 import org.sahamati.snalib.models.VersionResponse;
+import org.sahamati.snalib.utils.SnaLibLogger;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,48 +31,52 @@ public final class SNAClient {
     public SNAClient(SNAConfig config) {
         this.baseUrl = config.getBaseUrl().replaceAll("/+$", "");
         this.timeoutMs = config.getTimeoutMs();
-        this.logger = new SnaLibLogger(config.isLogEnabled(), gson);
+        this.logger = new SnaLibLogger(config.isLogEnabled(), gson, config.getOnWarning());
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(timeoutMs))
                 .build();
         this.entity = new EntityClient(this, gson);
         this.aa = new AAClient(this, gson);
-        connectWithRetry(config);
+        try {
+            connectWithRetry(config);
+        } catch (SNAConnectionError e) {
+            logger.warn(e.getMessage());
+        }
     }
 
     public EntityClient entity() { return entity; }
     public AAClient aa() { return aa; }
 
-    public void ping() {
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + "/sna/v1/ping"))
-                .GET()
-                .timeout(Duration.ofMillis(timeoutMs))
-                .build();
+    /**
+     * Checks liveness of the SNA service. Returns false and logs a warning if unreachable — never throws.
+     */
+    public boolean ping() {
         try {
-            HttpResponse<Void> resp = httpClient.send(req, HttpResponse.BodyHandlers.discarding());
-            if (resp.statusCode() != 200) {
-                throw new SNAConnectionError("ping returned HTTP " + resp.statusCode());
-            }
-        } catch (SNAConnectionError e) {
-            throw e;
-        } catch (IOException e) {
-            throw new SNAConnectionError(e.getMessage());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new SNAConnectionError("ping interrupted");
+            doPing();
+            return true;
+        } catch (RuntimeException e) {
+            logWarn(e.getMessage());
+            return false;
         }
     }
 
     public VersionResponse version() {
-        String body = get("/sna/v1/version");
         try {
-            return gson.fromJson(body, VersionResponse.class);
-        } catch (JsonSyntaxException e) {
-            throw new SNAUnexpectedResponseError(200, "failed to decode version response: " + e.getMessage(), body);
+            String body = get("/sna/v1/version");
+            try {
+                return gson.fromJson(body, VersionResponse.class);
+            } catch (JsonSyntaxException e) {
+                VersionResponse r = VersionResponse.error("failed to decode version response: " + e.getMessage());
+                logWarn(r.getErrorMessage());
+                return r;
+            }
+        } catch (RuntimeException e) {
+            logWarn(e.getMessage());
+            return VersionResponse.error(e.getMessage());
         }
     }
 
+    // package-private — used by EntityClient, AAClient, and sub-methods
     String get(String path) {
         HttpRequest req = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
@@ -90,6 +94,10 @@ public final class SNAClient {
                 .timeout(Duration.ofMillis(timeoutMs))
                 .build();
         return execute(req);
+    }
+
+    void logWarn(String message) {
+        logger.warn(message);
     }
 
     private String execute(HttpRequest req) {
@@ -125,18 +133,38 @@ public final class SNAClient {
         }
     }
 
+    private void doPing() {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/sna/v1/ping"))
+                .GET()
+                .timeout(Duration.ofMillis(timeoutMs))
+                .build();
+        try {
+            HttpResponse<Void> resp = httpClient.send(req, HttpResponse.BodyHandlers.discarding());
+            if (resp.statusCode() != 200) {
+                throw new SNAConnectionError("ping returned HTTP " + resp.statusCode());
+            }
+        } catch (SNAConnectionError e) {
+            throw e;
+        } catch (IOException e) {
+            throw new SNAConnectionError(e.getMessage());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SNAConnectionError("ping interrupted");
+        }
+    }
+
     private void connectWithRetry(SNAConfig config) {
         long deadline = System.currentTimeMillis() + config.getMaxWaitMs();
         long interval = config.getRetryIntervalMs();
-        SNAConnectionError lastError = null;
 
         for (int attempt = 0; attempt <= config.getMaxRetries(); attempt++) {
             try {
-                ping();
+                doPing();
                 logger.info("connected to SNA service");
                 return;
             } catch (SNAConnectionError e) {
-                lastError = e;
+                // continue to retry
             }
 
             if (attempt == config.getMaxRetries() || System.currentTimeMillis() + interval > deadline) {
