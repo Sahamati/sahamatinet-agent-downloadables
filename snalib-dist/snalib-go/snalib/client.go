@@ -19,7 +19,8 @@ type Config struct {
 	RetryInterval time.Duration // default: 1s, doubles each attempt
 	MaxWait       time.Duration // default: 15s total across all retry attempts
 	Timeout       time.Duration // default: 30s per request
-	LogEnabled    bool          // default: false; structured JSON logs go to stderr
+	LogEnabled    bool          // default: false; when false only warnings are emitted; when true all logs are emitted
+	OnWarning     func(msg string) // optional: route SDK warnings to your own logger; if nil, warnings go to stderr via slog
 }
 
 // SNAClient is the main entry point. Instantiate once and reuse across your application lifetime.
@@ -27,6 +28,8 @@ type SNAClient struct {
 	baseURL    string
 	httpClient *http.Client
 	logger     *slog.Logger
+	onWarning  func(msg string)
+	logEnabled bool
 	Entity     *EntityClient
 	AA         *AAClient
 }
@@ -47,9 +50,15 @@ func NewClient(cfg Config) (*SNAClient, error) {
 		cfg.Timeout = 30 * time.Second
 	}
 
+	// Always create a slog logger unless a custom OnWarning handler covers warnings
+	// and verbose logging is disabled — in that case no slog output is needed at all.
 	var logger *slog.Logger
-	if cfg.LogEnabled {
-		logger = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	if cfg.LogEnabled || cfg.OnWarning == nil {
+		level := slog.LevelWarn // warnings only by default
+		if cfg.LogEnabled {
+			level = slog.LevelInfo // all logs when verbose
+		}
+		logger = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 	}
 
 	c := &SNAClient{
@@ -61,15 +70,19 @@ func NewClient(cfg Config) (*SNAClient, error) {
 				IdleConnTimeout: 90 * time.Second,
 			},
 		},
-		logger: logger,
+		logger:     logger,
+		onWarning:  cfg.OnWarning,
+		logEnabled: cfg.LogEnabled,
 	}
 	c.Entity = &EntityClient{client: c}
 	c.AA = &AAClient{client: c}
 
+	var connectErr error
 	if err := c.connectWithRetry(cfg); err != nil {
-		return nil, err
+		c.log("warn", err.Error())
+		connectErr = err
 	}
-	return c, nil
+	return c, connectErr
 }
 
 // Ping checks liveness of the SNA service.
@@ -171,6 +184,17 @@ func (c *SNAClient) parseError(statusCode int, body []byte) error {
 }
 
 func (c *SNAClient) log(level, msg string, args ...any) {
+	switch level {
+	case "warn", "error":
+		if c.onWarning != nil {
+			c.onWarning(formatLogMsg(msg, args...))
+			return
+		}
+	case "info":
+		if !c.logEnabled {
+			return
+		}
+	}
 	if c.logger == nil {
 		return
 	}
@@ -182,4 +206,16 @@ func (c *SNAClient) log(level, msg string, args ...any) {
 	case "error":
 		c.logger.Error(msg, args...)
 	}
+}
+
+func formatLogMsg(msg string, args ...any) string {
+	if len(args) == 0 {
+		return msg
+	}
+	var b strings.Builder
+	b.WriteString(msg)
+	for i := 0; i+1 < len(args); i += 2 {
+		fmt.Fprintf(&b, " %v=%v", args[i], args[i+1])
+	}
+	return b.String()
 }

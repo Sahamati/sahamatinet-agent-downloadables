@@ -1,5 +1,7 @@
 package org.sahamati.snalib;
 
+import java.util.function.Consumer;
+
 public final class SNAConfig {
     private final String baseUrl;
     private final int maxRetries;
@@ -7,6 +9,7 @@ public final class SNAConfig {
     private final long maxWaitMs;
     private final long timeoutMs;
     private final boolean logEnabled;
+    private final Consumer<String> onWarning;
 
     private SNAConfig(Builder b) {
         this.baseUrl = b.baseUrl;
@@ -15,6 +18,7 @@ public final class SNAConfig {
         this.maxWaitMs = b.maxWaitMs;
         this.timeoutMs = b.timeoutMs;
         this.logEnabled = b.logEnabled;
+        this.onWarning = b.onWarning;
     }
 
     public String getBaseUrl() { return baseUrl; }
@@ -23,6 +27,7 @@ public final class SNAConfig {
     public long getMaxWaitMs() { return maxWaitMs; }
     public long getTimeoutMs() { return timeoutMs; }
     public boolean isLogEnabled() { return logEnabled; }
+    public Consumer<String> getOnWarning() { return onWarning; }
 
     public static Builder builder() { return new Builder(); }
 
@@ -33,6 +38,7 @@ public final class SNAConfig {
         private long maxWaitMs = 15_000;
         private long timeoutMs = 30_000;
         private boolean logEnabled = false;
+        private Consumer<String> onWarning = null;
 
         public Builder baseUrl(String baseUrl) { this.baseUrl = baseUrl; return this; }
         public Builder maxRetries(int maxRetries) { this.maxRetries = maxRetries; return this; }
@@ -40,6 +46,9 @@ public final class SNAConfig {
         public Builder maxWaitMs(long maxWaitMs) { this.maxWaitMs = maxWaitMs; return this; }
         public Builder timeoutMs(long timeoutMs) { this.timeoutMs = timeoutMs; return this; }
         public Builder logEnabled(boolean logEnabled) { this.logEnabled = logEnabled; return this; }
+
+        /** Optional. Receives all SDK warnings and errors. If not set, warnings are printed to stderr via java.util.logging. */
+        public Builder onWarning(Consumer<String> onWarning) { this.onWarning = onWarning; return this; }
 
         public SNAConfig build() {
             if (baseUrl == null || baseUrl.isBlank()) {

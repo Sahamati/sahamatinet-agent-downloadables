@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -17,11 +18,16 @@ public final class SnaLibLogger {
     private final Logger logger;
     private final Gson gson;
     private final boolean enabled;
+    private final Consumer<String> onWarning;
 
-    public SnaLibLogger(boolean enabled, Gson gson) {
+    public SnaLibLogger(boolean enabled, Gson gson, Consumer<String> onWarning) {
         this.enabled = enabled;
         this.gson = gson;
-        if (enabled) {
+        this.onWarning = onWarning;
+
+        // Always initialise the JUL logger — needed for warnings even when logEnabled is false.
+        // Skipped only when a custom onWarning handler is set and logEnabled is false (no JUL output at all).
+        if (enabled || onWarning == null) {
             logger = Logger.getLogger(LOGGER_NAME);
             logger.setUseParentHandlers(false);
             for (Handler h : logger.getHandlers()) logger.removeHandler(h);
@@ -32,19 +38,34 @@ public final class SnaLibLogger {
         }
     }
 
-    public void info(String msg, Object... kv) { emit(Level.INFO, "info", msg, kv); }
-    public void warn(String msg, Object... kv) { emit(Level.WARNING, "warn", msg, kv); }
-    public void error(String msg, Object... kv) { emit(Level.SEVERE, "error", msg, kv); }
+    /** Info logs — only emitted when logEnabled is true. */
+    public void info(String msg, Object... kv) {
+        if (!enabled) return;
+        emit(Level.INFO, "info", msg, kv);
+    }
+
+    /** Warnings — always emitted regardless of logEnabled. Routed to onWarning handler if set. */
+    public void warn(String msg, Object... kv) {
+        String json = buildJson("warn", msg, kv);
+        if (onWarning != null) {
+            onWarning.accept(json);
+        } else {
+            logger.log(Level.WARNING, json);
+        }
+    }
 
     private void emit(Level level, String levelName, String msg, Object... kv) {
-        if (!enabled) return;
+        logger.log(level, buildJson(levelName, msg, kv));
+    }
+
+    private String buildJson(String levelName, String msg, Object... kv) {
         Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("level", levelName);
         entry.put("msg", msg);
         for (int i = 0; i + 1 < kv.length; i += 2) {
             entry.put(String.valueOf(kv[i]), kv[i + 1]);
         }
-        logger.log(level, gson.toJson(entry));
+        return gson.toJson(entry);
     }
 
     private static final class JsonHandler extends Handler {

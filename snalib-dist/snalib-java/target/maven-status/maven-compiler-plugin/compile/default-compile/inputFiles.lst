@@ -3,6 +3,7 @@
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/ErrorResponse.java
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/SNAClient.java
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/SNAConfig.java
+/home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/SNAResponse.java
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/errors/SNAConnectionError.java
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/errors/SNANotImplementedError.java
 /home/devanjan/sahamati/sahamatinet-agent-downloadables/snalib-dist/snalib-java/src/main/java/org/sahamati/snalib/errors/SNAServerError.java
