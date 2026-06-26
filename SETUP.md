@@ -10,9 +10,9 @@ Guide to deploy SahamatiNet Agent using Helm chart in Kubernetes.
 
 ## Docker Image
 
-**Image**: `sahamatidevsecops/sna:v2.0.0`
+**Image**: `sahamatidevsecops/sna:v2.1.5`
 
-## Quick Start
+## Quick Start  
 
 ### 1. Clone Repository
 
@@ -53,9 +53,12 @@ tls:
 
 **Important**: If you created the secret with a different name, make sure `tls.secretName` in values.yaml matches exactly. The StatefulSet will automatically mount the TLS files from this secret.
 
-### 4. Create the credentials file with entityId and secret
+### 4. Create the credentials file with entityId and secret.
 
-This secret has to be updated everytime it is renewed
+This is required for SNA to generate a token for sending the SLA input to Sahamati API.
+
+**Important**: 
+This file has to be updated everytime the secret is renewed.
 
 ```bash
 kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent 
@@ -525,7 +528,7 @@ helm upgrade sahamatinet-agent . --namespace sahamatinet-agent -f custom-values.
 
 Once deployed, you can test the four APIs:
 
-### Method 1: Port Forward (Recommended)
+### Method 1: Port Forward
 
 ```bash
 # In one terminal - start port forwarding
@@ -534,22 +537,6 @@ kubectl port-forward -n sahamatinet-agent svc/sahamatinet-agent 4044:4044
 # In another terminal - test the APIs
 curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
-
-# Entity Registration - Using Secret
-curl -X POST http://localhost:4044/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "secret": "your-entity-secret"
-  }'
-
-# Entity Registration - Using Token
-curl -X POST http://localhost:4044/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "token": "your-entity-token"
-  }'
 
 curl -X POST http://localhost:4044/sna/v1/aa \
   -H "Content-Type: application/json" \
@@ -577,22 +564,6 @@ kubectl exec -n sahamatinet-agent -it statefulset/sahamatinet-agent -- \
 ```bash
 curl https://your-domain.com/sna/v1/ping
 curl https://your-domain.com/sna/v1/version
-
-# Entity Registration - Using Secret
-curl -X POST https://your-domain.com/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "secret": "your-entity-secret"
-  }'
-
-# Entity Registration - Using Token
-curl -X POST https://your-domain.com/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "token": "your-entity-token"
-  }'
 
 curl -X POST https://your-domain.com/sna/v1/aa \
   -H "Content-Type: application/json" \
@@ -638,91 +609,7 @@ curl http://localhost:4044/sna/v1/ping
 curl http://localhost:4044/sna/v1/version
 ```
 
-### 3. Entity Registration API
-
-**Endpoint**: `POST /sna/v1/entity/register`
-
-**Description**: This API is used to register an entity with the SahamatiNet Agent (SNA). Entities can provide either a `secret` or a `token` directly. The SNA stores the secret in its database and uses it for token generation, which is required to push SLA input data to SahamatiNET. Note: This is not required, if the credentials file with entityID and secret has been mounted (as a file or as a secret)
-
-**When to Call**:
-
-**If using `secret`**:
-- **Initial Setup**: Call this API when initializing your application/service to register your entity's secret with SNA
-- **Secret Reset**: Call this API when you perform a secret reset to update the stored secret in SNA's database
-- **Note**: Once the secret is registered, SNA will automatically generate tokens when the old token expires. You need to call this API again if your secret changes.
-
-**If using `token`**:
-- **Initial Setup**: Call this API when initializing your application/service to register your entity's token with SNA
-- **Token Refresh**: Call this API **before your old token expires** (recommended: every 12 hours or as per your token expiration policy) to provide a new token
-- **Note**: Since you are providing the token directly, you must proactively refresh it before expiration to ensure continuous service
-
-**Request Body Options**:
-
-**Option 1: Using Secret**
-```json
-{
-  "entity_id": "your-entity-id",
-  "secret": "your-entity-secret"
-}
-```
-
-**Option 2: Using Token**
-```json
-{
-  "entity_id": "your-entity-id",
-  "token": "your-entity-token"
-}
-```
-
-**Request Parameters**:
-
-| Key | Type | Required | Description |
-|-----|------|----------|-------------|
-| `entity_id` | string | Yes | Unique identifier for your entity |
-| `secret` | string | Conditional | Secret key for your entity (used for token generation). Either `secret` or `token` must be provided |
-| `token` | string | Conditional | Authentication token for your entity. Either `secret` or `token` must be provided |
-
-**Response**:
-```json
-{
-  "message": "Entity registration received successfully",
-  "entity_id": "your-entity-id",
-  "status": "registered"
-}
-```
-
-**Examples**:
-
-**Using Secret**:
-```bash
-curl -X POST http://localhost:4044/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "secret": "your-entity-secret"
-  }'
-```
-
-**Using Token**:
-```bash
-curl -X POST http://localhost:4044/sna/v1/entity/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity_id": "your-entity-id",
-    "token": "your-entity-token"
-  }'
-```
-
-**Important Notes**:
-- **Either `secret` OR `token` must be provided** - the request will fail if both are missing
-- If both `secret` and `token` are provided, the `token` will be used
-- **Using Secret**: The secret is securely stored in SNA's database and is used for generating authentication tokens. Tokens are automatically generated when the old token expires. You only need to call this API again if your secret changes.
-- **Using Token**: You must call this API before your old token expires (recommended: every 12 hours or as per your token expiration policy) to ensure continuous service. SNA will use the provided token directly.
-- Tokens are required for making SLA API calls
-- You must call this API during your application/service initialization
-- The `entity_id` is always required - the request will fail if it is missing or empty
-
-### 4. Agent Request API
+### 3. Agent Request API
 
 **Endpoint**: `POST /sna/v1/aa`
 
@@ -735,6 +622,7 @@ curl -X POST http://localhost:4044/sna/v1/entity/register \
   "peerType": "FIP",
   "customerId": "customer_identifier@AA_identifier",
   "httpStatus": 0,
+  "txnCorId": "txn-uuid-1234",
   "addlAttr": {},
   "body": {
     "ver": "2.0.0",
@@ -772,6 +660,7 @@ curl -X POST http://localhost:4044/sna/v1/entity/register \
 | route | string | ReBit API endpoint route |
 | peerId | string | entity id of the FIP |
 | peerType | string | entity type of the peer - FIP |
+| txnCorId | string | uuid - txn correlation id mapping a request to a response |
 | customerId | string | customer id related to the transaction |
 | httpStatus | integer | the http status code, applicable only to responses |
 | addlAttr | json | optional, reserved for future use |
@@ -798,7 +687,6 @@ curl -X POST http://localhost:4044/sna/v1/aa \
 |--------|----------|-------------|
 | GET | `/sna/v1/ping` | Health check endpoint |
 | GET | `/sna/v1/version` | Get agent version information |
-| POST | `/sna/v1/entity/register` | Register entity secret (call during initialization and secret reset) |
 | POST | `/sna/v1/aa` | Handle agent requests |
 
 ## Troubleshooting
