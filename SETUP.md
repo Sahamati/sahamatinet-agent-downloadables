@@ -192,7 +192,9 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 
 **IMPORTANT**: The `datastore_path` is **MANDATORY** and must be set in `values.yaml`. The pod will fail to start if this path is empty.
 
-The SQLite database requires a directory path where the database file (`sna.db`) will be created. You have two options:
+The BadgerDb database requires a directory path where the database file (`sna.db`) will be created. 
+
+You have two options:
 
 #### Option 1: Persistent Storage (Recommended for Production)
 
