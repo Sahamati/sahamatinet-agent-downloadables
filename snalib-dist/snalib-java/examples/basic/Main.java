@@ -53,14 +53,6 @@ public class Main {
             System.out.printf("register: entity=%s  status=%s%n", reg.getEntityId(), reg.getStatus());
         }
 
-        // --- Get token ---
-        TokenResponse tok = client.entity().getToken();
-        if (!tok.isSuccess()) {
-            System.err.println("get_token warning: " + tok.getErrorMessage());
-        } else {
-            System.out.printf("token: type=%s  expires_in=%ds%n", tok.getTokenType(), tok.getExpiresIn());
-        }
-
         // --- FIP-initiated flow: requestIn → responseOut ---
         // FIP sends a request to AA; AA processes and responds back.
         // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
@@ -184,5 +176,26 @@ public class Main {
          * Application logic after the outgoing message has been dispatched.
          * ...
          */
+    }
+
+    /**
+     * Demonstrates token generation from the entity service.
+     * This function retrieves an access token required for entity operations.
+     * Token response includes expiration details and token type information.
+     *
+     * Purpose: Shows how to call the entity token generation API and handle
+     * both success and failure cases using the isSuccess() pattern.
+     *
+     * Note: This function is not called in the main flow — token generation
+     * is optional and not required for AA dispatch operations.
+     */
+    static void getToken(SNAClient client) {
+        // --- Get token ---
+        TokenResponse tok = client.entity().getToken();
+        if (!tok.isSuccess()) {
+            System.err.println("get_token warning: " + tok.getErrorMessage());
+        } else {
+            System.out.printf("token: type=%s  expires_in=%ds%n", tok.getTokenType(), tok.getExpiresIn());
+        }
     }
 }

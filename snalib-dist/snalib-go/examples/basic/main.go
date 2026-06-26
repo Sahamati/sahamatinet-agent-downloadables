@@ -59,14 +59,6 @@ func main() {
 	}
 	fmt.Printf("register: entity=%s  status=%s\n", reg.EntityID, reg.Status)
 
-	// --- Get token ---
-	tok, err := snaNewClient.Entity.GetToken(ctx)
-	if err != nil {
-		handleErr("get_token", err)
-		return
-	}
-	fmt.Printf("token: type=%s  expires_in=%ds\n", tok.TokenType, tok.ExpiresIn)
-
 	// --- FIP-initiated flow: requestIn → responseOut ---
 	// FIP sends a request to AA; AA processes and responds back.
 	// Generate one txnCorID for this flow — use the same value for both requestIn and responseOut.
@@ -239,4 +231,23 @@ func handleErr(op string, err error) {
 	default:
 		fmt.Printf("[%s] unexpected error: %v\n", op, err)
 	}
+}
+
+// getToken demonstrates token generation from the entity service.
+// This function retrieves an access token required for entity operations.
+// Token response includes expiration details and token type information.
+//
+// Purpose: Shows how to call the entity token generation API and handle
+// errors using the (T, error) pattern.
+//
+// Note: This function is not called in the main flow — token generation
+// is optional and not required for AA dispatch operations.
+func getToken(ctx context.Context, client *snalib.SNAClient) {
+	// --- Get token ---
+	tok, err := client.Entity.GetToken(ctx)
+	if err != nil {
+		handleErr("get_token", err)
+		return
+	}
+	fmt.Printf("token: type=%s  expires_in=%ds\n", tok.TokenType, tok.ExpiresIn)
 }
