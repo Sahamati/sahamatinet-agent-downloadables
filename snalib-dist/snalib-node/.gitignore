@@ -1,0 +1,6 @@
+# Dependencies — never committed
+node_modules/
+
+# dist/ IS committed (see CLAUDE.md §8.2 / §9 — clients consume the prebuilt output
+# via the file: protocol, mirroring how Java clients use the JAR from target/).
+# Do not ignore it.
