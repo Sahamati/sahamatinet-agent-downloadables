@@ -1,4 +1,5 @@
-import { SNAClient, AARequest, DispatchResponse } from '../../src/index.js';
+import { SNAClient } from '../../dist/index.js';
+import type { AARequest, DispatchResponse } from '../../dist/index.js';
 
 // Instantiate once at application startup — reuse across your entire application lifetime.
 // SNAClient.create() calls /ping internally and retries with backoff. If unreachable, a warning
@@ -24,18 +25,6 @@ if (!ver.isSuccess()) {
   console.error('version warning:', ver.errorMessage);
 } else {
   console.log(`version: ${ver.agentVersion} (${ver.name})`);
-}
-
-// --- Register entity (secret path) ---
-const reg = await client.entity.register({
-  entityId: 'TEST-1-AA',
-  secret: 'vDC2f9XsoijNROu4lrf4iIYewZxQ0NRW',
-  // token: 'eyJhbGci...',  // provide instead of secret, or alongside (service uses token if both present)
-});
-if (!reg.isSuccess()) {
-  console.error('register warning:', reg.errorMessage);
-} else {
-  console.log(`register: entity=${reg.entityId}  status=${reg.status}`);
 }
 
 // --- FIP-initiated flow: requestIn → responseOut ---

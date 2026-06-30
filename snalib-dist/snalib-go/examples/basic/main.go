@@ -47,18 +47,6 @@ func main() {
 	}
 	fmt.Printf("version: %s (%s)\n", ver.AgentVersion, ver.Name)
 
-	// --- Register entity (secret path) ---
-	reg, err := snaNewClient.Entity.Register(ctx, snalib.RegisterRequest{
-		EntityID: "-enter-your-entity-id-here-",
-		Secret:   "-enter-your-entity-secret-here-",
-		// Token: "eyJhbGci...",  // provide instead of Secret, or alongside (service uses Token if both present)
-	})
-	if err != nil {
-		handleErr("register", err)
-		return
-	}
-	fmt.Printf("register: entity=%s  status=%s\n", reg.EntityID, reg.Status)
-
 	// --- FIP-initiated flow: requestIn → responseOut ---
 	// FIP sends a request to AA; AA processes and responds back.
 	// Generate one txnCorID for this flow — use the same value for both requestIn and responseOut.

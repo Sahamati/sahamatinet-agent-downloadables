@@ -4,8 +4,6 @@ import org.sahamati.snalib.SNAClient;
 import org.sahamati.snalib.SNAConfig;
 import org.sahamati.snalib.models.AARequest;
 import org.sahamati.snalib.models.DispatchResponse;
-import org.sahamati.snalib.models.RegisterRequest;
-import org.sahamati.snalib.models.RegisterResponse;
 import org.sahamati.snalib.models.TokenResponse;
 import org.sahamati.snalib.models.VersionResponse;
 
@@ -39,18 +37,6 @@ public class Main {
             System.err.println("version warning: " + ver.getErrorMessage());
         } else {
             System.out.printf("version: %s (%s)%n", ver.getAgentVersion(), ver.getName());
-        }
-
-        // --- Register entity (secret path) ---
-        RegisterResponse reg = client.entity().register(RegisterRequest.builder()
-                .entityId("-enter-your-entity-id-here-")
-                .secret("-enter-your-entity-secret-here-")
-                // .token("eyJhbGci...")  // provide instead of secret, or alongside (service uses token if both present)
-                .build());
-        if (!reg.isSuccess()) {
-            System.err.println("register warning: " + reg.getErrorMessage());
-        } else {
-            System.out.printf("register: entity=%s  status=%s%n", reg.getEntityId(), reg.getStatus());
         }
 
         // --- FIP-initiated flow: requestIn → responseOut ---
