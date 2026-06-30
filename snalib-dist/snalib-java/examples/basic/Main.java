@@ -4,8 +4,6 @@ import org.sahamati.snalib.SNAClient;
 import org.sahamati.snalib.SNAConfig;
 import org.sahamati.snalib.models.AARequest;
 import org.sahamati.snalib.models.DispatchResponse;
-import org.sahamati.snalib.models.RegisterRequest;
-import org.sahamati.snalib.models.RegisterResponse;
 import org.sahamati.snalib.models.TokenResponse;
 import org.sahamati.snalib.models.VersionResponse;
 
@@ -41,28 +39,17 @@ public class Main {
             System.out.printf("version: %s (%s)%n", ver.getAgentVersion(), ver.getName());
         }
 
-        // --- Register entity (secret path) ---
-        RegisterResponse reg = client.entity().register(RegisterRequest.builder()
-                .entityId("-enter-your-entity-id-here-")
-                .secret("-enter-your-entity-secret-here-")
-                // .token("eyJhbGci...")  // provide instead of secret, or alongside (service uses token if both present)
-                .build());
-        if (!reg.isSuccess()) {
-            System.err.println("register warning: " + reg.getErrorMessage());
-        } else {
-            System.out.printf("register: entity=%s  status=%s%n", reg.getEntityId(), reg.getStatus());
-        }
-
         // --- FIP-initiated flow: requestIn → responseOut ---
         // FIP sends a request to AA; AA processes and responds back.
-        // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
-        String fipTxnId = UUID.randomUUID().toString();
+        // Generate one txnCorId for this flow — use the same value for both requestIn and responseOut.
+        // SNA uses txnCorId to correlate the pair.
+        String fipTxnCorId = UUID.randomUUID().toString();
 
         // body accepts three forms — pass whichever you already have:
         //   raw JSON string:  .body("{\"ver\":\"2.0.0\",\"txnid\":\"...\"}")
         //   POJO:             .body(myConsentNotificationObject)
-        //   Map:              .body(Map.of("ver", "2.0.0", "txnid", fipTxnId))
-        String consentBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + fipTxnId + "\"}";
+        //   Map:              .body(Map.of("ver", "2.0.0", "txnid", "..."))
+        String consentBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + UUID.randomUUID() + "\"}";
 
         AARequest incomingRequest = AARequest.builder()
                 .callType("requestIn")
@@ -70,7 +57,7 @@ public class Main {
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
-                .txnCorId("corr-test-001")
+                .txnCorId(fipTxnCorId)
                 .body(consentBody)
                 .build();
 
@@ -81,7 +68,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
-                .txnCorId("corr-test-001")
+                .txnCorId(fipTxnCorId) // same txnCorId as requestIn
                 .body(consentBody)
                 .build();
 
@@ -91,13 +78,15 @@ public class Main {
 
         // --- AA-initiated flow: requestOut → responseIn ---
         // AA sends a request to FIP; FIP responds back to AA.
-        // txnId and route must be identical across the pair — SNA keys the lookup on peerId+txnId+route.
-        String aaTxnId = UUID.randomUUID().toString();
+        // Generate one txnCorId for this flow — use the same value for both requestOut and responseIn.
+        // SNA uses txnCorId to correlate the pair.
+        String aaTxnCorId = UUID.randomUUID().toString();
 
-        // raw JSON string:  .body("{\"ver\":\"2.0.0\",\"txnid\":\"...\"}")
-        // POJO:             .body(myFIRequestObject)
-        // Map:              .body(Map.of("ver", "2.0.0", "txnid", aaTxnId))
-        String fiRequestBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + aaTxnId + "\"}";
+        // body accepts three forms — pass whichever you already have:
+        //   raw JSON string:  .body("{\"ver\":\"2.0.0\",\"txnid\":\"...\"}")
+        //   POJO:             .body(myFIRequestObject)
+        //   Map:              .body(Map.of("ver", "2.0.0", "txnid", "..."))
+        String fiRequestBody = "{\"ver\":\"2.0.0\",\"txnid\":\"" + UUID.randomUUID() + "\"}";
 
         AARequest outgoingRequest = AARequest.builder()
                 .callType("requestOut")
@@ -105,7 +94,7 @@ public class Main {
                 .peerId("fip-test-001")
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
-                .txnCorId("corr-test-002")
+                .txnCorId(aaTxnCorId)
                 .body(fiRequestBody)
                 .build();
 
@@ -116,7 +105,7 @@ public class Main {
                 .peerType("FIP")
                 .customerId("user-test@sahamati")
                 .httpStatus(200)
-                .txnCorId("corr-test-002")
+                .txnCorId(aaTxnCorId) // same txnCorId as requestOut
                 .body(fiRequestBody)
                 .addlAttr(Map.of("correlationId", "corr-test-789"))
                 .build();

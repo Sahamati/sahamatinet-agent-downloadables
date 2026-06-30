@@ -1,0 +1,45 @@
+import { RegisterResponse, TokenResponse } from './models.js';
+export class EntityClient {
+    client;
+    constructor(client) {
+        this.client = client;
+    }
+    async register(req) {
+        try {
+            const payload = { entity_id: req.entityId };
+            // Never log secret or token — protection is here at the callsite.
+            if (req.token !== undefined) {
+                payload['token'] = req.token;
+            }
+            else if (req.secret !== undefined) {
+                payload['secret'] = req.secret;
+            }
+            const [status, body] = await this.client.doPost('/sna/v1/entity/register', JSON.stringify(payload));
+            if (status !== 200) {
+                this.client.parseError(status, body);
+            }
+            const data = this.client.parseJson(body);
+            return RegisterResponse.from(data);
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.client.logWarn(msg);
+            return RegisterResponse.error(msg);
+        }
+    }
+    async getToken() {
+        try {
+            const [status, body] = await this.client.doGet('/sna/v1/entity/token/generate');
+            if (status !== 200) {
+                this.client.parseError(status, body);
+            }
+            const data = this.client.parseJson(body);
+            return TokenResponse.from(data);
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.client.logWarn(msg);
+            return TokenResponse.error(msg);
+        }
+    }
+}
