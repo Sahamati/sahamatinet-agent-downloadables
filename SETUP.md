@@ -301,7 +301,7 @@ persistence:
   enabled: true        # Enable persistent volume (recommended for production)
   storageClass: ""     # Storage class name (empty = use default)
   accessMode: ReadWriteOnce
-  size: 1Gi           # Storage size for SQLite database
+  size: 1Gi           # Storage size for BadgerDB database
 ```
 
 **Note**: 
@@ -473,7 +473,7 @@ data:
       datastore_path: "/app/datastore"  # Path where volume will be mounted
 ```
 
-**Deploy** - The PVC will be automatically created and the directory will be available at `/app/datastore`. The SQLite database file (`sna.db`) will be created automatically in this directory.
+**Deploy** - The PVC will be automatically created and the directory will be available at `/app/datastore`. The Badger database file will be created automatically in this directory.
 
 #### For Testing (Data Lost on Pod Restart)
 
@@ -511,7 +511,7 @@ exit
 - When `persistence.enabled: true`, the directory is **automatically created** by Kubernetes when the volume is mounted
 - When `persistence.enabled: false`, you may need to manually create the directory (as shown above)
 - The `datastore_path` must be a **directory path** (e.g., `/app/datastore`), not a file path
-- The database file `sna.db` will be automatically created by SQLite inside the specified directory
+- The database file will be created by SNA inside the specified directory
 - For production, **always use `persistence.enabled: true`** to prevent data loss
 
 ## Upgrading Deployment
@@ -728,7 +728,7 @@ curl -X POST http://localhost:4044/sna/v1/aa \
    grep -A 3 "key_file:" helmchart/values.yaml
    ```
 
-### SQLite datastore path issues
+### BadgerDB datastore path issues
 
 **Error**: `data store path empty` or `db is not writable`
 
