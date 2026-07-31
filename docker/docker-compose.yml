@@ -1,0 +1,129 @@
+# SahamatiNet Agent (SNA) - Docker Compose deployment
+#
+# For deployments without Kubernetes (e.g. a single EC2 instance).
+# Read SETUP-DOCKER.md before running this.
+#
+# Usage:
+#   docker compose up -d
+#   docker compose ps
+#   docker compose logs -f sna
+
+services:
+  # ---------------------------------------------------------------------------
+  # One-shot init: makes the datastore volume writable by the app user.
+  #
+  # The SNA image runs as non-root (uid/gid 1000). A fresh Docker named volume
+  # is created root-owned, so without this step the agent cannot write to its
+  # BadgerDB datastore and will fail to start. In Kubernetes this is handled by
+  # `securityContext.fsGroup: 1000`; Docker has no equivalent, so we do it here.
+  #
+  # This container exits immediately once ownership is correct. It is safe to
+  # re-run on every `docker compose up`.
+  # ---------------------------------------------------------------------------
+  sna-init:
+    image: sahamatidevsecops/sna:v2.1.5
+    user: "0:0"
+    entrypoint: ["sh", "-c", "chown -R 1000:1000 /app/datastore && echo 'datastore ownership set to 1000:1000'"]
+    volumes:
+      - sna-datastore:/app/datastore
+    restart: "no"
+
+  sna:
+    image: sahamatidevsecops/sna:v2.1.5
+    container_name: sahamatinet-agent
+    depends_on:
+      sna-init:
+        condition: service_completed_successfully
+
+    # Matches the `sahamati` user baked into the image and the Helm chart's
+    # securityContext (runAsUser/runAsGroup 1000, runAsNonRoot: true).
+    user: "1000:1000"
+
+    # Only one instance may run at a time. BadgerDB is a single-writer store and
+    # will refuse to open a datastore already locked by another process.
+    # Do not scale this service.
+    restart: unless-stopped
+
+    ports:
+      # Bound to loopback by default so the agent is not reachable from outside
+      # the instance even if the EC2 security group is permissive.
+      #
+      # If your AA application runs on ANOTHER host in the VPC, change this to
+      # the instance's private IP, e.g.  "10.0.1.25:4044:4044"  and open 4044
+      # to that host only in the security group. Do not bind to 0.0.0.0 unless
+      # the security group restricts the source.
+      #
+      # If your AA application runs as a container on THIS host, remove the port
+      # mapping entirely, attach that container to the `sna-net` network below,
+      # and call SNA at http://sahamatinet-agent:4044 instead.
+      - "127.0.0.1:4044:4044"
+
+    volumes:
+      # Application configuration. Equivalent to the Helm ConfigMap.
+      # Mount the directory, not the file: editors replace the file's inode on
+      # save, which breaks a single-file bind mount.
+      # Apply config changes with `docker compose restart sna`.
+      - ./config:/app/config:ro
+
+      # Entity credentials (entityId / entitySecret). Equivalent to the
+      # `sahamatinet-agent-credentials` Secret. Must contain credentials.json.
+      - ./secrets:/app/secrets:ro
+
+      # BadgerDB datastore. Equivalent to the StatefulSet's PVC.
+      # This is a named volume so it survives `docker compose down` and image
+      # upgrades. See SETUP-DOCKER.md for backup guidance.
+      - sna-datastore:/app/datastore
+
+      # --- Optional: TLS termination at the agent -----------------------------
+      # Only needed if config.yaml sets tls.https_enabled: true.
+      # Place tls.crt and tls.key in ./certs on the host.
+      # - ./certs:/etc/tls:ro
+
+      # --- Optional: JWS signing key -----------------------------------------
+      # Only needed if config.yaml sets sla.jws_signing_enabled: true.
+      # - ./jws:/app/certs:ro
+
+    healthcheck:
+      # Mirrors the Helm chart's readinessProbe (GET /sna/v1/ping).
+      # If you enable HTTPS, change this to:
+      #   ["CMD", "curl", "-fsk", "https://localhost:4044/sna/v1/ping"]
+      test: ["CMD", "curl", "-fs", "http://localhost:4044/sna/v1/ping"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # Matches terminationGracePeriodSeconds: 60 in the Helm chart, giving the
+    # agent time to flush in-flight SLA pushes before the process is killed.
+    stop_grace_period: 60s
+
+    # Resource ceilings are left unset on purpose.
+    #
+    # The Helm chart limits the pod to 6Gi / 5 CPU, but those are ceilings for a
+    # shared cluster. On a dedicated instance running only the agent, capping is
+    # unnecessary and a cap larger than the host will stop the container from
+    # starting at all (`cpus` must not exceed the instance's vCPU count).
+    #
+    # If this host runs other workloads, uncomment and set values that fit the
+    # instance - see the sizing section in SETUP-DOCKER.md.
+    # mem_limit: 6g
+    # cpus: 4.0
+
+    logging:
+      # Without rotation, container logs will fill the root EBS volume over time.
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    networks:
+      - sna-net
+
+volumes:
+  sna-datastore:
+    name: sna-datastore
+
+networks:
+  sna-net:
+    name: sna-net
+    driver: bridge

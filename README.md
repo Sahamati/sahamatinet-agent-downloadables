@@ -13,6 +13,10 @@ This repository contains the following:
     You may choose to use these helmcharts, write your own charts for integrating with your infra accordingly.
     Refer to the SETUP guide on how to use the helmcharts.
 
+### docker
+    Docker Compose deployment for hosts without Kubernetes.
+    Refer to docker/SETUP-DOCKER.md.
+
 ### samples
     This contains sample code demonstrating the usage of SNA http APIs in transaction call flows.
 
