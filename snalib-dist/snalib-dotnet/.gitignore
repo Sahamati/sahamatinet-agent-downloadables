@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+
+# dist/ IS committed — mirrors snalib-node's dist/ and snalib-java's target/*.jar.
+# Clients consume the prebuilt NuGet package directly. Do not ignore it.
