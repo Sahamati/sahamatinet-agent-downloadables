@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    net8.0, not netstandard2.0.
+
+    System.Text.Json ships in the net8.0 shared framework, so this project has zero
+    external dependencies (CLAUDE.md section 3.5). On netstandard2.0 it is a NuGet
+    PackageReference and pulls in System.Memory, System.Buffers,
+    System.Runtime.CompilerServices.Unsafe, System.Text.Encodings.Web and
+    Microsoft.Bcl.AsyncInterfaces behind it.
+
+    If a consumer needs .NET Framework reach, reverting is one line plus restoring the
+    PackageReference — but it is then a dependency exception and must be recorded in
+    CLAUDE.md the way Gson is for Java.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <RootNamespace>Sahamati.SnaLib</RootNamespace>
+    <AssemblyName>Sahamati.SnaLib</AssemblyName>
+    <PackageId>Sahamati.SnaLib</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Sahamati</Authors>
+    <Company>Sahamati</Company>
+    <Description>Client SDK for the Sahamati Net Agent (SNA) microservice.</Description>
+    <RepositoryUrl>https://github.com/sahamati/snalib</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="examples/**/*.cs" />
+    <None Remove="examples/**" />
+  </ItemGroup>
+
+</Project>
