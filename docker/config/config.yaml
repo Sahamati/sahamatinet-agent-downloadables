@@ -72,7 +72,6 @@ config:
 
     log_percentile_values: false
     log_sla: true
-    sla_interval: "1m"
 
     # Leave false in any real deployment. Setting this to true stops SLA inputs
     # from reaching Sahamati.
@@ -103,9 +102,6 @@ config:
   # Processing
   # ---------------------------------------------------------------------------
   processConfig:
-    modes:
-      disable_sla: false
-      disable_tokens: false
     stats_interval: "1m"
     log_transactions: true
 
