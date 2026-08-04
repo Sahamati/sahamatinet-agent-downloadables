@@ -26,8 +26,28 @@ namespace Sahamati.SnaLib
                 object? bodyValue;
                 if (req.Body is string bodyStr)
                 {
-                    using var doc = JsonDocument.Parse(bodyStr);
-                    bodyValue = doc.RootElement.Clone();
+                    if (string.IsNullOrWhiteSpace(bodyStr))
+                    {
+                        // The peer returned no payload. null, {} and an absent key are all
+                        // len == 0 to SNA, and on responseIn that is the transport-failure
+                        // signal. Re-encoding "" as null is lossless — JSON cannot carry a
+                        // string into an object-typed field.
+                        bodyValue = null;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(bodyStr);
+                            bodyValue = doc.RootElement.Clone();
+                        }
+                        catch (JsonException)
+                        {
+                            // Not JSON. Send it unchanged and let SNA reject it — the SDK
+                            // does not validate, and the parsed value's type is SNA's rule.
+                            bodyValue = bodyStr;
+                        }
+                    }
                 }
                 else
                 {

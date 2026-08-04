@@ -10,10 +10,25 @@ export class AAClient {
             // If string, parse it first — otherwise JSON.stringify embeds it as a quoted string.
             let bodyValue;
             if (typeof req.body === 'string') {
-                bodyValue = JSON.parse(req.body);
+                if (req.body.trim() === '') {
+                    // The peer returned no payload. null, {} and an absent key are all len == 0 to
+                    // SNA, and on responseIn that is the transport-failure signal. Re-encoding "" as
+                    // null is lossless — JSON cannot carry a string into an object-typed field.
+                    bodyValue = null;
+                }
+                else {
+                    try {
+                        bodyValue = JSON.parse(req.body);
+                    }
+                    catch {
+                        // Not JSON. Send it unchanged and let SNA reject it — the SDK does not
+                        // validate, and the parsed value's type is SNA's rule to enforce.
+                        bodyValue = req.body;
+                    }
+                }
             }
             else {
-                bodyValue = req.body;
+                bodyValue = req.body ?? null;
             }
             const payload = {
                 callType: req.callType,
