@@ -1,2 +1,14 @@
 .metals/
 .vscode/
+
+# Secrets and credentials - never commit
+.env
+.env.*
+!.env.example
+docker/secrets/*
+!docker/secrets/*.example
+docker/certs/
+docker/jws/
+*.pem
+*.key
+credentials.json

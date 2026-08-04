@@ -1,0 +1,122 @@
+# SahamatiNet Agent - configuration
+#
+# Mounted read-only at /app/config/config.yaml, which is the path the agent
+# reads on startup. This file replaces the default config baked into the image.
+#
+# Paths below refer to locations INSIDE the container. They must match the
+# volume mounts in docker-compose.yml.
+
+config:
+  # ---------------------------------------------------------------------------
+  # Server
+  # ---------------------------------------------------------------------------
+  PORT: "4044"
+  ROUTES_PREFIX: "sna"
+  API_RESPONSE_VERSION: "1.0.0"
+  MAX_PAYLOAD_SIZE_IN_KB: 4096
+  READ_BUFFER_SIZE: 4096
+
+  # 0 = use all CPUs available to the container.
+  GOMAXPROCS: 0
+
+  ERROR_CODE: ""
+
+  ENV: "production"
+  LOG_LEVEL: "INFO"
+
+  # ---------------------------------------------------------------------------
+  # Datastore
+  #
+  # BadgerDB directory. Backed by the `sna-datastore` named volume so data
+  # survives restarts and image upgrades. The sna.db files are created here
+  # automatically on first start.
+  #
+  # Do not point two containers at the same datastore - BadgerDB is a
+  # single-writer store.
+  # ---------------------------------------------------------------------------
+  store:
+    type: 0
+    db:
+      datastore_path: "/app/datastore"
+
+  # ---------------------------------------------------------------------------
+  # Entity credentials
+  #
+  # File supplied via the ./secrets bind mount. Contains entityId and
+  # entitySecret, used to obtain a token before pushing SLA inputs.
+  # This file must be re-created whenever the entity secret is rotated.
+  # ---------------------------------------------------------------------------
+  entityConfig:
+    credentials: "/app/secrets/credentials.json"
+
+  # ---------------------------------------------------------------------------
+  # SLA reporting
+  #
+  # !! REQUIRED: replace the two URLs below with the endpoints issued to you
+  # !! during Sahamati onboarding. The values shown are the DEVELOPMENT
+  # !! endpoints and must not be used for production traffic.
+  #
+  # Both require outbound HTTPS (443) egress from this host.
+  # ---------------------------------------------------------------------------
+  sla:
+    sla_api_url: "https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "https://api.dev.sahamati.org.in/iam/v1"
+
+    # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
+    aa_webhook_url: ""
+
+    # JWS signing of SLA payloads. If set to true, mount the private key via the
+    # optional ./jws volume in docker-compose.yml and keep the path below.
+    jws_signing_enabled: false
+    jws_private_key_path: "/app/certs/sla_jws_private.pem"
+
+    log_percentile_values: false
+    log_sla: true
+
+    # Leave false in any real deployment. Setting this to true stops SLA inputs
+    # from reaching Sahamati.
+    disable_sla_push: false
+
+  # ---------------------------------------------------------------------------
+  # Debug API - leave this token empty
+  #
+  # The agent always starts an internal debug server on port 4044+5046 (9090).
+  # It cannot be switched off by configuration. Its endpoints can read the
+  # contents of the BadgerDB datastore, including stored keys and values.
+  #
+  # Access is gated solely by this token, sent as an X-Debug-Token header. When
+  # the token is empty, every request is rejected and the API is effectively
+  # closed. That is the correct setting for any real deployment.
+  #
+  # Do NOT set this to the placeholder value shipped in the image's own default
+  # config. That value is public and would leave your datastore readable to
+  # anyone who can reach port 9090.
+  #
+  # If Sahamati support asks you to enable it for diagnostics, set a long random
+  # value, keep port 9090 unpublished, and clear it again afterwards.
+  # ---------------------------------------------------------------------------
+  debugConfig:
+    token: ""
+
+  # ---------------------------------------------------------------------------
+  # Processing
+  # ---------------------------------------------------------------------------
+  processConfig:
+    stats_interval: "1m"
+    log_transactions: true
+
+  # ---------------------------------------------------------------------------
+  # TLS
+  #
+  # Recommended: leave https_enabled false when the AA application and the agent
+  # sit on the same host or inside the same VPC, and terminate TLS at your own
+  # load balancer or reverse proxy.
+  #
+  # To terminate TLS at the agent instead: set https_enabled true, uncomment the
+  # ./certs mount in docker-compose.yml, place tls.crt and tls.key there, and
+  # switch the healthcheck to the HTTPS variant noted in that file.
+  # ---------------------------------------------------------------------------
+  tls:
+    https_enabled: false
+    cert_file: "/etc/tls/tls.crt"
+    key_file: "/etc/tls/tls.key"
