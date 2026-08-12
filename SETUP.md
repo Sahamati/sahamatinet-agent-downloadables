@@ -188,6 +188,64 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 - **`cert_file` and `key_file` are MANDATORY** if `tls.https_enabled: true` - The pod will fail if these are not set when HTTPS is enabled.
 - You must provide these paths in your `values.yaml` before deploying.
 
+### Sequencer Configuration (Optional)
+
+The **sequencer** is an optional, opt-in component inside SNA that sits in front of the normal
+request-handling pipeline and re-orders events that can arrive out of order, before forwarding
+them unchanged. It runs in two stages:
+
+- **Stage A (TxnSequencer)** — pairs a request leg with its response leg by `txnCorId`, for every
+  route, so a leg that arrives before its pair isn't dropped.
+- **Stage B (SessionSequencer)** — orders `FIR -> FIN -> FIF` events within a session
+  (`fipID` + `sessionID`), releasing them downstream in that order once a session's events are
+  complete, or force-releasing whatever is held once a session goes stale (via a periodic
+  collector sweep).
+
+Both stages are sticky-routed (hashed by `txnCorId` / `fipID+sessionID`) across a configurable
+number of worker goroutines, so ordering decisions for a given transaction/session are always
+made by the same worker. **When disabled (the default), the sequencer has no effect on request
+handling.**
+
+It is configured in `config.yaml` under `process_config`:
+
+```yaml
+process_config:
+  modes:
+    sequencer_enabled: true   # opt-in, off by default
+  sequencer_config:
+    txn_pair_ttl: "1m"            # Stage A: max wait for a lone leg's pair before it's dropped
+    session_max_age: "1m"         # Stage B: max time an incomplete session is held before force-release
+    collector_interval: "1m"      # how often the stale-session sweep runs
+    txn_queue_size: 20000         # Stage A per-worker buffered channel size
+    session_queue_size: 20000     # Stage B per-worker buffered channel size
+    txn_worker_count: 1           # Stage A worker goroutines
+    session_worker_count: 1       # Stage B worker goroutines
+    queue_enqueue_timeout: "100ms" # non-blocking enqueue timeout before a drop is logged
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `process_config.modes.sequencer_enabled` | bool | `false` | Enables the sequencer. Off by default. |
+| `sequencer_config.txn_pair_ttl` | duration | `1m` | Stage A: max time to wait for a lone req/resp leg's pair before dropping it |
+| `sequencer_config.session_max_age` | duration | `1m` | Stage B: max time a session may sit incomplete before the collector force-releases it |
+| `sequencer_config.collector_interval` | duration | `1m` | How often the stale-session sweep runs |
+| `sequencer_config.txn_queue_size` | int | `20000` | Stage A per-worker buffered channel size |
+| `sequencer_config.session_queue_size` | int | `20000` | Stage B per-worker buffered channel size |
+| `sequencer_config.txn_worker_count` | int | `1` | Stage A worker goroutines |
+| `sequencer_config.session_worker_count` | int | `1` | Stage B worker goroutines |
+| `sequencer_config.queue_enqueue_timeout` | duration | `100ms` | Non-blocking enqueue timeout before a drop is logged |
+
+All `sequencer_config` fields are optional and fall back to the defaults above if omitted or
+invalid. Keep `collector_interval` at or below `session_max_age` — otherwise stale sessions are
+force-released later than intended (SNA logs a startup warning if this isn't the case).
+
+**Note (Helm deployments)**: The current `helmchart/templates/configmap.yaml` does not yet expose
+`process_config`/`sequencer_config` as `values.yaml` fields. To enable the sequencer in a
+Helm-based deployment today, add the `process_config` block above directly under `config:` in
+`helmchart/templates/configmap.yaml` (or a values-driven equivalent) before installing/upgrading
+the chart. For Docker Compose deployments, edit `config.yaml` directly — see
+`docker/SETUP-DOCKER.md`.
+
 ### BadgerDB Datastore Configuration
 
 **IMPORTANT**: The `datastore_path` is **MANDATORY** and must be set in `values.yaml`. The pod will fail to start if this path is empty.
