@@ -10,7 +10,7 @@ Guide to deploy SahamatiNet Agent using Helm chart in Kubernetes.
 
 ## Docker Image
 
-**Image**: `sahamatidevsecops/sna:v2.1.5`
+**Image**: `sahamatidevsecops/sna:v1.1`
 
 ## Quick Start  
 
@@ -195,9 +195,9 @@ The Helm chart uses the following configuration variables (defined in `values.ya
 
 ```yaml
 image:
-  repository: sahamatidevsecops/sahamatinet-agent
+  repository: sahamatidevsecops/sna
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  tag: "v1.1"
 ```
 
 ### Configuration Variables
@@ -902,7 +902,7 @@ kubectl describe svc -n sahamatinet-agent sahamatinet-agent
 kubectl describe pod -n sahamatinet-agent | grep -i image
 
 # Test image pull manually
-docker pull sahamatidevsecops/sahamatinet-agent:1.0.0
+docker pull sahamatidevsecops/sna:v1.1
 ```
 
 ## Uninstallation
@@ -921,7 +921,7 @@ kubectl delete namespace sahamatinet-agent
 
 - **Repository**: `https://github.com/Sahamati/sahamatinet-agent-downloadables.git`
 - **Helm Chart Location**: `helmchart/`
-- **Docker Image**: `sahamatidevsecops/sahamatinet-agent:1.0.0`
+- **Docker Image**: `sahamatidevsecops/sna:v1.1`
 - **Service Port**: `4044`
 - **Default Namespace**: `sahamatinet-agent`
 

@@ -92,7 +92,31 @@ chmod 600 secrets/credentials.json
 
 ### 3.3 Configure the agent
 
-Edit `config/config.yaml` and set the two SLA endpoints for your environment:
+Two configuration templates ship with the agent:
+
+| Template | Environment |
+|----------|-------------|
+| `config/config-prod.yaml` | Production |
+| `config/config-uat.yaml` | UAT |
+
+The agent reads `config/config.yaml` and nothing else. Copy the template for
+your environment over it:
+
+```bash
+# Production
+cp config/config-prod.yaml config/config.yaml
+
+# UAT
+cp config/config-uat.yaml config/config.yaml
+```
+
+Then edit `config/config.yaml`, not the template.
+
+The templates differ in three places: the SLA endpoints, `LOG_LEVEL`, and
+`capture_txn`. Everything else is identical between them.
+
+Confirm the SLA endpoints in your copy match what Sahamati issued you during
+onboarding:
 
 ```yaml
   sla:
@@ -102,6 +126,15 @@ Edit `config/config.yaml` and set the two SLA endpoints for your environment:
 
 Every other value has a working default. Review the TLS section (3.4) before
 going to production.
+
+Three logging settings are worth knowing about, all documented inline in
+`config/config.yaml`:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `LOG_LEVEL` | `INFO` | Log verbosity - `DEBUG`, `INFO`, `WARN`, `ERROR` or `FATAL`. Any other value falls back to `INFO` |
+| `processConfig.log_transactions` | `true` | Master switch for transaction logging. Writes one pipe-separated record per transaction, customer ID masked |
+| `processConfig.developer_config.capture_txn` | `false` | Debug add-on to `log_transactions`; no effect unless that is `true`. Additionally dumps the full request body with the customer ID **unmasked**. Keep off outside local debugging |
 
 ### 3.4 Decide where TLS terminates
 
@@ -294,8 +327,9 @@ docker ps --filter volume=sna-datastore
 connectivity. Verify egress from inside the container:
 
 ```bash
+# Use the token_generation_base_url from your config.yaml
 docker exec sahamatinet-agent curl -sS -o /dev/null -w '%{http_code}\n' \
-  https://api.dev.sahamati.org.in/iam/v1
+  https://api.sahamati.org.in/iam/v1
 ```
 
 A timeout or DNS failure means the security group, NAT, or proxy is blocking
