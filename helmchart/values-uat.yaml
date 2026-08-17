@@ -1,0 +1,15 @@
+# UAT overrides for the SahamatiNet Agent chart.
+# Applied on top of values.yaml:
+#   helm install sahamatinet-agent . -n sahamatinet-agent -f values-uat.yaml
+
+data:
+  log_level: "DEBUG"
+
+  processConfig:
+    log_transactions: true
+    developer_config:
+      capture_txn: true
+
+  sla:
+    sla_api_url: "https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "https://api.uat.sahamati.org.in/iam/v1"

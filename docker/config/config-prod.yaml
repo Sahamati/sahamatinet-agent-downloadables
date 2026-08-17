@@ -1,7 +1,10 @@
-# SahamatiNet Agent - configuration
+# SahamatiNet Agent - PRODUCTION configuration template.
 #
-# Mounted read-only at /app/config/config.yaml, which is the path the agent
-# reads on startup. This file replaces the default config baked into the image.
+# This file is a template. Copy it over config.yaml before deploying:
+#
+#   cp config/config-prod.yaml config/config.yaml
+#
+# The agent reads config.yaml only. Edit that copy, not this template.
 #
 # Paths below refer to locations INSIDE the container. They must match the
 # volume mounts in docker-compose.yml.
@@ -54,15 +57,12 @@ config:
   # ---------------------------------------------------------------------------
   # SLA reporting
   #
-  # Defaults to the UAT endpoints. If you are deploying to production, copy
-  # config-prod.yaml over this file instead of editing these by hand.
-  #
-  # Confirm both URLs match what Sahamati issued you during onboarding. Both
-  # require outbound HTTPS (443) egress from this host.
+  # Production endpoints. Both require outbound HTTPS (443) egress from this
+  # host.
   # ---------------------------------------------------------------------------
   sla:
-    sla_api_url: "https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push"
-    token_generation_base_url: "https://api.uat.sahamati.org.in/iam/v1"
+    sla_api_url: "https://api.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "https://api.sahamati.org.in/iam/v1"
 
     # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
     aa_webhook_url: ""
@@ -82,9 +82,9 @@ config:
   # ---------------------------------------------------------------------------
   # Debug API - leave this token empty
   #
-  # The agent always starts an internal debug server on port 4044+5046 (9090).
-  # It cannot be switched off by configuration. Its endpoints can read the
-  # contents of the BadgerDB datastore, including stored keys and values.
+  # The agent always starts an internal debug server on port 9090. It cannot be
+  # switched off by configuration. Its endpoints can read the contents of the
+  # BadgerDB datastore, including stored keys and values.
   #
   # Access is gated solely by this token, sent as an X-Debug-Token header. When
   # the token is empty, every request is rejected and the API is effectively
@@ -93,9 +93,6 @@ config:
   # Do NOT set this to the placeholder value shipped in the image's own default
   # config. That value is public and would leave your datastore readable to
   # anyone who can reach port 9090.
-  #
-  # If Sahamati support asks you to enable it for diagnostics, set a long random
-  # value, keep port 9090 unpublished, and clear it again afterwards.
   # ---------------------------------------------------------------------------
   debugConfig:
     token: ""
@@ -109,7 +106,7 @@ config:
   #
   # capture_txn is a debug add-on and has no effect unless log_transactions is
   # true. It additionally dumps the full request body, with the customer ID
-  # UNMASKED. Keep it off outside local debugging.
+  # UNMASKED. Turn it on in production only after testing the behaviour in UAT.
   # ---------------------------------------------------------------------------
   processConfig:
     stats_interval: "1m"

@@ -21,7 +21,7 @@ services:
   # re-run on every `docker compose up`.
   # ---------------------------------------------------------------------------
   sna-init:
-    image: sahamatidevsecops/sna:v2.1.5
+    image: sahamatidevsecops/sna:v1.1
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /app/datastore && echo 'datastore ownership set to 1000:1000'"]
     volumes:
@@ -29,7 +29,7 @@ services:
     restart: "no"
 
   sna:
-    image: sahamatidevsecops/sna:v2.1.5
+    image: sahamatidevsecops/sna:v1.1
     container_name: sahamatinet-agent
     depends_on:
       sna-init:
