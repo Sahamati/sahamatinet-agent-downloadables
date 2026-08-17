@@ -59,8 +59,8 @@ data:
     db:
       datastore_path: ""
   sla:
-    sla_api_url: "" # e.g. https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push"
-    token_generation_base_url: "" # e.g. https://api.dev.sahamati.org.in/iam/v1"
+    sla_api_url: "" # e.g. prod=>https://api.sahamati.org.in/sla-inputs/aa/v1/push uat=>https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push 
+    token_generation_base_url: "" # e.g. prod=>https://api.sahamati.org.in/iam/v1 uat=>https://api.uat.sahamati.org.in/iam/v1"
     aa_webhook_url: "" # e.g. https://webhook.site/f407be06-462d-47ab-ad48-5d8ba8a259ea"
     jws_signing_enabled: false
     jws_private_key_path: "/app/certs/sla_jws_private.pem"  # Path where JWS key is mounted
