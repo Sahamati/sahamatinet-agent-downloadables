@@ -55,11 +55,16 @@ data:
   error_code: ""
   read_buffer_size: 4096
   env: "production"
+  log_level: "INFO"
+  processConfig:
+    log_transactions: true
+    developer_config:
+      capture_txn: false
   store:
     db:
       datastore_path: ""
   sla:
-    sla_api_url: "" # e.g. prod=>https://api.sahamati.org.in/sla-inputs/aa/v1/push uat=>https://api.dev.sahamati.org.in/sla-inputs/aa/v1/push 
+    sla_api_url: "" # e.g. prod=>https://api.sahamati.org.in/sla-inputs/aa/v1/push uat=>https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push
     token_generation_base_url: "" # e.g. prod=>https://api.sahamati.org.in/iam/v1 uat=>https://api.uat.sahamati.org.in/iam/v1"
     aa_webhook_url: "" # e.g. https://webhook.site/f407be06-462d-47ab-ad48-5d8ba8a259ea"
     jws_signing_enabled: false

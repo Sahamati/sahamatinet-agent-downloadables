@@ -119,17 +119,56 @@ kubectl create secret generic sahamatinet-agent-credentials -n sahamatinet-agent
 - You can use different paths, but ensure `cert_file` and `key_file` match where the TLS secret is mounted (default: `/etc/tls/`)
   
 
-### 5. Deploy with Helm
+### 6. Environment Values Files
+
+The chart ships two environment files that layer on top of `values.yaml`:
+
+| File | Environment |
+|------|-------------|
+| `values-prod.yaml` | Production |
+| `values-uat.yaml` | UAT |
+
+Each one sets the SLA API URLs, the token generation URL, `LOG_LEVEL`, and the
+`processConfig` settings for that environment. Everything else comes from
+`values.yaml`.
+
+Pass the file with `-f`. Values in the environment file win; anything it does
+not mention falls back to `values.yaml`:
 
 ```bash
 cd helmchart
-helm install sahamatinet-agent . --namespace sahamatinet-agent
+
+# Production
+helm install sahamatinet-agent . --namespace sahamatinet-agent -f values-prod.yaml
+
+# UAT
+helm install sahamatinet-agent . --namespace sahamatinet-agent -f values-uat.yaml
+```
+
+Any key from `values.yaml` can be added to these files if it needs to differ
+between environments - for example the image tag, ingress host, TLS secret name,
+or resource limits. Just make sure to keep the same nesting as in `values.yaml`.
+
+**Where to set `datastore_path`**: the environment files intentionally leave it
+out. You can set it once in `values.yaml` if the same path works everywhere, or
+add it to each environment file if you prefer to keep them self-contained.
+Either approach is fine - pick whichever fits how you manage your environments.
+It must not be empty, or the pod will fail to start.
+
+**On `capture_txn`**: `values-uat.yaml` enables it and `values-prod.yaml` does
+not. Please turn it on in production only after testing the behaviour in UAT.
+
+### 7. Deploy with Helm
+
+```bash
+cd helmchart
+helm install sahamatinet-agent . --namespace sahamatinet-agent -f values-uat.yaml
 ```
 
 **Or** from the repository root:
 
 ```bash
-helm install sahamatinet-agent ./helmchart --namespace sahamatinet-agent
+helm install sahamatinet-agent ./helmchart --namespace sahamatinet-agent -f values-uat.yaml
 ```
 
 **Note**: Wait for approximately 1 minute after installation for the pod to become ready. The readiness probe performs health checks that may take some time to pass.
@@ -140,7 +179,7 @@ helm install sahamatinet-agent . --namespace sahamatinet-agent \
   --set tls.secretName=sahamatinet-agent-tls
 ```
 
-### 6. Verify Deployment
+### 8. Verify Deployment
 
 ```bash
 kubectl get pods -n sahamatinet-agent
@@ -175,6 +214,9 @@ These are set via the `data` section in `values.yaml` and passed to the containe
 | `error_code` | `""` | Error code configuration (empty by default) |
 | `read_buffer_size` | `4096` | Read buffer size in bytes |
 | `env` | `"production"` | Environment (development/production) |
+| `log_level` | `"INFO"` | Log verbosity - `DEBUG`, `INFO`, `WARN`, `ERROR`, or `FATAL`. Any other value falls back to `INFO` |
+| `processConfig.log_transactions` | `true` | Master switch for transaction logging. Writes one pipe-separated record per transaction - customer ID masked - to the transaction log and stdout |
+| `processConfig.developer_config.capture_txn` | `false` | Debug add-on to `log_transactions`; has no effect unless that is `true`. Additionally dumps the full request body, with the customer ID **unmasked**. Keep off outside local debugging |
 | `store.db.datastore_path` | `""` | **REQUIRED** - Path for disk-based database storage (must be a directory path, e.g., `/app/datastore`) - A persistent volume |
 | `tls.https_enabled` | `true` | Enable/disable HTTPS |
 | `tls.cert_file` | `""` | **REQUIRED if HTTPS enabled** - Path to TLS certificate file (mounted from secret, e.g., `/etc/tls/tls.crt`) |
@@ -574,11 +616,18 @@ exit
 
 ## Upgrading Deployment
 
+Pass the same environment file you installed with:
+
 ```bash
-helm upgrade sahamatinet-agent . --namespace sahamatinet-agent
+helm upgrade sahamatinet-agent . --namespace sahamatinet-agent -f values-prod.yaml
+helm upgrade sahamatinet-agent . --namespace sahamatinet-agent -f values-uat.yaml
 ```
 
-Or with custom values:
+If the `-f` is omitted, all other settings still come from `values.yaml` as
+usual, but the environment-specific keys revert to its defaults - the SLA URLs
+become empty and the agent will not reach Sahamati.
+
+Or with your own values file:
 
 ```bash
 helm upgrade sahamatinet-agent . --namespace sahamatinet-agent -f custom-values.yaml

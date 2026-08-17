@@ -17,6 +17,11 @@ data:
       ERROR_CODE: "{{ .Values.data.error_code }}"
       READ_BUFFER_SIZE: {{ .Values.data.read_buffer_size }}
       ENV: "{{ .Values.data.env }}"
+      LOG_LEVEL: "{{ .Values.data.log_level }}"
+      processConfig:
+        log_transactions: {{ .Values.data.processConfig.log_transactions }}
+        developer_config:
+          capture_txn: {{ .Values.data.processConfig.developer_config.capture_txn }}
       store:
         db:
           datastore_path: "{{ .Values.data.store.db.datastore_path }}"

@@ -1,0 +1,15 @@
+# Production overrides for the SahamatiNet Agent chart.
+# Applied on top of values.yaml:
+#   helm install sahamatinet-agent . -n sahamatinet-agent -f values-prod.yaml
+
+data:
+  log_level: "INFO"
+
+  processConfig:
+    log_transactions: true
+    developer_config:
+      capture_txn: false
+
+  sla:
+    sla_api_url: "https://api.sahamati.org.in/sla-inputs/aa/v1/push"
+    token_generation_base_url: "https://api.sahamati.org.in/iam/v1"
