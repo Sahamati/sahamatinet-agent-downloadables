@@ -798,6 +798,26 @@ curl -X POST http://localhost:4044/sna/v1/aa \
 | GET | `/sna/v1/version` | Get agent version information |
 | POST | `/sna/v1/aa` | Handle agent requests |
 
+## Points of integration
+
+As an AA, while communicating with FIP, below are the points of integration and the calltype to collect data for SLA of FIPs
+
+| API | Req CallType | Resp CallType |
+|--------|----------|-----------|
+| /Accounts/discover | requestOut | responseIn |
+| /Accounts/link | requestOut | responseIn |
+| /Accounts/delink | requestOut | responseIn |
+| /Accounts/link/verify | requestOut | responseIn |
+| /FI/request | requestOut | responseIn |
+| /FI/fetch | requestOut | responseIn |
+| /Consent/Notification | requestOut | responseIn |
+| /Consent | requestOut | responseIn |
+| /Heartbeat | requestOut | responseIn |
+| /Consent/Notification | requestIn | responseOut |
+| /FI/Notification | requestIn | responseOut |
+| /Account/Link/Notification | requestIn | responseOut |
+
+
 ## Troubleshooting
 
 ### Required paths not set
