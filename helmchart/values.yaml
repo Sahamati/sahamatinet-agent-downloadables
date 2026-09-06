@@ -5,7 +5,7 @@ namespace: sahamatinet-agent
 image:
   repository: sahamatidevsecops/sna
   pullPolicy: IfNotPresent
-  tag: "v1.1"
+  tag: "v1.2.1"
 
 imagePullSecrets: []
 
