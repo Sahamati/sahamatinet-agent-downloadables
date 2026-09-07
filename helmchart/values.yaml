@@ -65,11 +65,22 @@ data:
       datastore_path: ""
   sla:
     sla_api_url: "" # e.g. prod=>https://api.sahamati.org.in/sla-inputs/aa/v1/push uat=>https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push
+    billing_api_url: ""
     token_generation_base_url: "" # e.g. prod=>https://api.sahamati.org.in/iam/v1 uat=>https://api.uat.sahamati.org.in/iam/v1"
     aa_webhook_url: "" # e.g. https://webhook.site/f407be06-462d-47ab-ad48-5d8ba8a259ea"
     jws_signing_enabled: false
     jws_private_key_path: "/app/certs/sla_jws_private.pem"  # Path where JWS key is mounted
     log_percentile_values: false
+    billing:
+      period_tiers:
+        - { tier: "13m", min_days: 395 }
+        - { tier: "7m", min_days: 210 }
+        - { tier: "4m", min_days: 120 }
+        - { tier: "1m", min_days: 30 }
+        - { tier: "1w", min_days: 7 }
+        - { tier: "5d", min_days: 5 }
+        - { tier: "1d", min_days: 1 }
+    
   entityConfig:
     credentials: "/app/secrets/credentials.json"  # Path where credentials file is mounted 
   tls:
