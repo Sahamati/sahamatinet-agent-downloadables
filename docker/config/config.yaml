@@ -62,7 +62,17 @@ config:
   # ---------------------------------------------------------------------------
   sla:
     sla_api_url: "https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push"
+    billing_api_url: ""
     token_generation_base_url: "https://api.uat.sahamati.org.in/iam/v1"
+    billing:
+      period_tiers:
+        - { tier: "13m", min_days: 395 }
+        - { tier: "7m", min_days: 210 }
+        - { tier: "4m", min_days: 120 }
+        - { tier: "1m", min_days: 30 }
+        - { tier: "1w", min_days: 7 }
+        - { tier: "5d", min_days: 5 }
+        - { tier: "1d", min_days: 1 }
 
     # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
     aa_webhook_url: ""
