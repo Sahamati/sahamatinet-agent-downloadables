@@ -80,6 +80,7 @@ data:
         - { tier: "1w", min_days: 7 }
         - { tier: "5d", min_days: 5 }
         - { tier: "1d", min_days: 1 }
+        - { tier: "ps", min_days: -1 }
     
   entityConfig:
     credentials: "/app/secrets/credentials.json"  # Path where credentials file is mounted 
