@@ -22,6 +22,8 @@ data:
         log_transactions: {{ .Values.data.processConfig.log_transactions }}
         developer_config:
           capture_txn: {{ .Values.data.processConfig.developer_config.capture_txn }}
+        modes:
+          sequencer_enabled: {{ .Values.data.processConfig.modes.sequencer_enabled }}
       store:
         db:
           datastore_path: "{{ .Values.data.store.db.datastore_path }}"

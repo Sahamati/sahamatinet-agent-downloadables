@@ -5,7 +5,7 @@ namespace: sahamatinet-agent
 image:
   repository: sahamatidevsecops/sna
   pullPolicy: IfNotPresent
-  tag: "v1.2.1"
+  tag: "v1.2.3"
 
 imagePullSecrets: []
 
@@ -60,6 +60,8 @@ data:
     log_transactions: true
     developer_config:
       capture_txn: false
+    modes:
+      sequencer_enabled: true
   store:
     db:
       datastore_path: ""
