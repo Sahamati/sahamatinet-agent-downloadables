@@ -73,6 +73,9 @@ config:
         - { tier: "1w", min_days: 7 }
         - { tier: "5d", min_days: 5 }
         - { tier: "1d", min_days: 1 }
+        - { tier: "ps", min_days: -1 }
+        - { tier: "other", min_days: -2 }
+
 
     # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
     aa_webhook_url: ""
@@ -87,7 +90,7 @@ config:
 
     # Leave false in any real deployment. Setting this to true stops SLA inputs
     # from reaching Sahamati.
-    disable_sla_push: false
+    disable_sla_push: true
 
   # ---------------------------------------------------------------------------
   # Debug API - leave this token empty
