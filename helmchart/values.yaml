@@ -72,6 +72,10 @@ data:
     jws_signing_enabled: false
     jws_private_key_path: "/app/certs/sla_jws_private.pem"  # Path where JWS key is mounted
     log_percentile_values: false
+  billing:
+    billing_api_url: "https://data.dev.sahamati.org.in/metrics/billing/v1/push" #"<billing ingest URL>"
+    disable_billing_push: false  # the only on/off switch for -BIL; true = not pushed, rows still drained
+    log_billing: true
   entityConfig:
     credentials: "/app/secrets/credentials.json"  # Path where credentials file is mounted 
   tls:
