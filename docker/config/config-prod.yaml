@@ -61,7 +61,7 @@ config:
   # host.
   # ---------------------------------------------------------------------------
   sla:
-    sla_api_url: "https://api.sahamati.org.in/sla-inputs/aa/v1/push"
+    sla_api_url: "https://api.sahamati.org.in/metrics/perf/v1/push"
     token_generation_base_url: "https://api.sahamati.org.in/iam/v1"
 
     # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
