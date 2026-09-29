@@ -36,8 +36,8 @@ data:
         log_percentile_values: {{ .Values.data.sla.log_percentile_values }}
       billing:
          billing_api_url: "{{ .Values.data.billing.billing_api_url }}"
-         disable_billing_push: "{{ .Values.data.billing.disable_billing_push }}"
-         log_billing: "{{ .Values.data.billing.log_billing }}"
+         disable_billing_push: {{ .Values.data.billing.disable_billing_push }}
+         log_billing: {{ .Values.data.billing.log_billing }}
       entityConfig:
         credentials: "{{ .Values.data.entityConfig.credentials }}"
       tls:
