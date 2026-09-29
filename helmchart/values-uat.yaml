@@ -13,3 +13,6 @@ data:
   sla:
     sla_api_url: "https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push"
     token_generation_base_url: "https://api.uat.sahamati.org.in/iam/v1"
+  billing:
+    billing_api_url: "https://data.uat.sahamati.org.in/metrics/billing/v1/push" #"<billing ingest URL>"
+    

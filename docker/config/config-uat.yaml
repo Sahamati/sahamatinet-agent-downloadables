@@ -77,6 +77,14 @@ config:
     # Leave false in any real deployment. Setting this to true stops SLA inputs
     # from reaching Sahamati.
     disable_sla_push: false
+  billing:
+    # billing_api_url is the destination for the -BIL (FIU billing) payload only, with no
+    # fallback to sla_api_url. It is REQUIRED when disable_billing_push is false - SNA refuses
+    # to start without it - and ignored when disable_billing_push is true. It is no longer an
+    # on/off switch: use disable_billing_push for that. -REQ and -NTF always use sla_api_url.
+    billing_api_url: "https://data.uat.sahamati.org.in/metrics/billing/v1/push" #"<billing ingest URL>"
+    disable_billing_push: false  # the only on/off switch for -BIL; true = not pushed, rows still drained
+    log_billing: true  
 
   # ---------------------------------------------------------------------------
   # Debug API - leave this token empty
