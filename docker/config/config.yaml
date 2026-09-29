@@ -61,7 +61,7 @@ config:
   # require outbound HTTPS (443) egress from this host.
   # ---------------------------------------------------------------------------
   sla:
-    sla_api_url: "https://api.uat.sahamati.org.in/sla-inputs/aa/v1/push"
+    sla_api_url: "https://api.uat.sahamati.org.in/metrics/perf/v1/push"
     token_generation_base_url: "https://api.uat.sahamati.org.in/iam/v1"
 
     # Optional. Your own endpoint to receive agent callbacks. Leave empty if unused.
