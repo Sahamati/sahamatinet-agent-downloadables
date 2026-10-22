@@ -14,6 +14,6 @@ data:
     sla_api_url: "https://api.sahamati.org.in/metrics/perf/v1/push"
     token_generation_base_url: "https://api.sahamati.org.in/iam/v1"
   billing:
-    billing_api_url: "" #"<billing ingest URL>"
-    disable_billing_push: true  # the only on/off switch for -BIL; true = not pushed, rows still drained
-    log_billing: false
+    billing_api_url: "https://metrics.sahamati.org.in/metrics/billing/v1/push" #"<billing ingest URL>"
+    disable_billing_push: false  # the only on/off switch for -BIL; true = not pushed, rows still drained
+    log_billing: true
