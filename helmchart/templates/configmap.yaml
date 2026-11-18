@@ -38,6 +38,10 @@ data:
          billing_api_url: "{{ .Values.data.billing.billing_api_url }}"
          disable_billing_push: {{ .Values.data.billing.disable_billing_push }}
          log_billing: {{ .Values.data.billing.log_billing }}
+      telemetry:
+         telemetry_api_url: "{{ .Values.data.telemetry.telemetry_api_url }}"
+         disable_telemetry_push: {{ .Values.data.telemetry.disable_telemetry_push }}
+         log_telemetry: {{ .Values.data.telemetry.log_telemetry }}
       entityConfig:
         credentials: "{{ .Values.data.entityConfig.credentials }}"
       tls:
