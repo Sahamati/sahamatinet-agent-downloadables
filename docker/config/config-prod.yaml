@@ -86,6 +86,13 @@ config:
     billing_api_url: "https://metrics.sahamati.org.in/metrics/billing/v1/push" #"<billing ingest URL>"
     disable_billing_push: false  # the only on/off switch for -BIL; true = not pushed, rows still drained
     log_billing: true
+  telemetry:
+    # telemetry_api_url is the destination for the -TEL (telemetry) payload only, with no fallback
+    # to sla_api_url. It is REQUIRED when disable_telemetry_push is false - SNA refuses to start
+    # without it. Set to the SLA push URL until a dedicated telemetry ingest URL exists.
+    telemetry_api_url: "" #"<telemetry ingest URL>"
+    disable_telemetry_push: true  # the only on/off switch for -TEL; true = not pushed, rows still drained
+    log_telemetry: true  
 
   # ---------------------------------------------------------------------------
   # Debug API - leave this token empty
