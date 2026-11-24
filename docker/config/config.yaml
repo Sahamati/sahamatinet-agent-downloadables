@@ -90,8 +90,8 @@ config:
     # telemetry_api_url is the destination for the -TEL (telemetry) payload only, with no fallback
     # to sla_api_url. It is REQUIRED when disable_telemetry_push is false - SNA refuses to start
     # without it. Set to the SLA push URL until a dedicated telemetry ingest URL exists.
-    telemetry_api_url: "" #"<telemetry ingest URL>"
-    disable_telemetry_push: true # the only on/off switch for -TEL; true = not pushed, rows still drained
+    telemetry_api_url: "https://ecobilling.sahamati.org.in/telemetry/collector/v1/push" #"<telemetry ingest URL>"
+    disable_telemetry_push: false # the only on/off switch for -TEL; true = not pushed, rows still drained
     log_telemetry: true       # log the -BIL request body (developer configuration, as log_sla)
    
 
